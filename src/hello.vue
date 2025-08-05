@@ -1,8 +1,5 @@
 <template>
     <form style="padding: 1px;">
-        <sp-heading>
-            订单查询系统
-        </sp-heading>
         
         <!-- 搜索区域 - 一行布局 -->
         <div style="display: flex; align-items: center; margin-top: 20px; gap: 10px;">
@@ -39,34 +36,27 @@
         
         <!-- 搜索结果展示 - 原始数据 -->
         <div v-if="searchResult" style="margin-top: 20px;">
-            <sp-heading>搜索结果</sp-heading>
             <div v-if="searchResult.length === 0" style="margin-top: 10px; color: #666;">
                 未找到匹配的产品编号
             </div>
-            <div v-else style="max-height: 400px; overflow-y: scroll; border: 1px solid #ddd; border-radius: 5px; padding: 15px; background-color: #f9f9f9;">
+            <div v-else style="max-height: 400px; overflow-y: scroll; border: 1px solid #ddd; border-radius: 5px; padding: 8px; background-color: #f9f9f9;">
                 <div v-for="product in searchResult" :key="product.product_id" 
-                     style="margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 5px; background-color: white;">
+                     style="margin-bottom: 5px; padding: 10px; border: 1px solid #eee; border-radius: 5px; background-color: white;">
                     
                     <!-- 解析后的数据展示 -->
-                    <div style="background-color: white; padding: 15px; border-radius: 5px;">
+                    <div style="background-color: white; padding: 8px; border-radius: 5px;">
                         
-                        <!-- 调试信息 -->
-                        <div style="margin-bottom: 15px; padding: 10px; background-color: #f0f0f0; border-radius: 3px; font-size: 12px;">
-                            <strong>调试信息:</strong><br>
-                            产品ID: {{ product.product_id }}<br>
-                            产品编号: {{ product.product_no }}<br>
-                            产品名称: {{ product.product_name }}<br>
-                            产品状态: {{ product.product_status_name }}<br>
-                            总价格: {{ product.total_price }}<br>
-                            已支付: {{ product.total_pay }}<br>
-                            客户对象: {{ typeof product.customer }}<br>
-                            定制信息: {{ typeof product.customize_info }}
-                        </div>
+
+                        
+
                         
                         <!-- 产品信息 -->
                         <div style="margin-bottom: 20px;">
-                            <sp-heading size="S" style="color: #2e7d32; margin-bottom: 10px;">产品信息</sp-heading>
-                            <div>
+                            <div @click="toggleProductInfo" style="cursor: pointer; outline: none; display: flex; align-items: center; padding: 8px; user-select: none; border-bottom: 1px solid #e0e0e0; width: 100%;">
+                                <div style="color: #2e7d32; font-weight: bold; font-size: 14px; flex: 1; pointer-events: none;">产品信息</div>
+                                <span style="color: #666; pointer-events: none;">{{ productInfoExpanded ? '▼' : '▶' }}</span>
+                            </div>
+                            <div v-if="productInfoExpanded" style="padding: 15px 8px;">
                                 <div style="display: flex; margin-bottom: 8px;">
                                     <div style="font-weight: bold; width: 120px; flex-shrink: 0;">产品编号:</div>
                                     <div style="flex: 1; color: #1976d2; font-weight: bold;">{{ product.product_no }}</div>
@@ -106,8 +96,11 @@
                         
                         <!-- 支付信息 -->
                         <div style="margin-bottom: 20px;">
-                            <sp-heading size="S" style="color: #2e7d32; margin-bottom: 10px;">支付信息</sp-heading>
-                            <div>
+                            <div @click="togglePaymentInfo" style="cursor: pointer; outline: none; display: flex; align-items: center; padding: 8px; user-select: none; border-bottom: 1px solid #e0e0e0; width: 100%;">
+                                <div style="color: #2e7d32; font-weight: bold; font-size: 14px; flex: 1; pointer-events: none;">支付信息</div>
+                                <span style="color: #666; pointer-events: none;">{{ paymentInfoExpanded ? '▼' : '▶' }}</span>
+                            </div>
+                            <div v-if="paymentInfoExpanded" style="padding: 15px 8px;">
                                 <div style="display: flex; margin-bottom: 8px;">
                                     <div style="font-weight: bold; width: 120px; flex-shrink: 0;">总价:</div>
                                     <div style="flex: 1; color: #d32f2f; font-weight: bold; font-size: 16px;">${{ formatCurrency(product.total_price) }}</div>
@@ -147,8 +140,11 @@
                         
                         <!-- 客户信息 -->
                         <div v-if="product.customer" style="margin-bottom: 20px;">
-                            <sp-heading size="S" style="color: #2e7d32; margin-bottom: 10px;">客户信息</sp-heading>
-                            <div>
+                            <div @click="toggleCustomerInfo" style="cursor: pointer; outline: none; display: flex; align-items: center; padding: 8px; user-select: none; border-bottom: 1px solid #e0e0e0; width: 100%;">
+                                <div style="color: #2e7d32; font-weight: bold; font-size: 14px; flex: 1; pointer-events: none;">客户信息</div>
+                                <span style="color: #666; pointer-events: none;">{{ customerInfoExpanded ? '▼' : '▶' }}</span>
+                            </div>
+                            <div v-if="customerInfoExpanded" style="padding: 15px 8px;">
                                 <div style="display: flex; margin-bottom: 8px;">
                                     <div style="font-weight: bold; width: 120px; flex-shrink: 0;">客户姓名:</div>
                                     <div style="flex: 1;">{{ product.customer.name }}</div>
@@ -183,18 +179,12 @@
                                     <div style="font-weight: bold; width: 120px; flex-shrink: 0;">备注:</div>
                                     <div style="flex: 1; word-break: break-all;">{{ product.customer.memo }}</div>
                                 </div>
-                            </div>
+                                                        </div>
                         </div>
+                        
+                        
                         
 
-                        
-                        <!-- 原始数据链接 -->
-                        <div style="margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 3px; font-size: 12px;">
-                            <details>
-                                <summary style="cursor: pointer; color: #666;">查看原始JSON数据</summary>
-                                <pre style="margin-top: 10px; font-family: monospace; font-size: 11px; white-space: pre-wrap; color: #333;">{{ JSON.stringify(product, null, 2) }}</pre>
-                            </details>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -284,6 +274,15 @@
             formatCurrency(amount) {
                 if (amount === null || amount === undefined) return '0.00';
                 return parseFloat(amount).toFixed(2);
+            },
+            toggleProductInfo() {
+                this.productInfoExpanded = !this.productInfoExpanded;
+            },
+            toggleCustomerInfo() {
+                this.customerInfoExpanded = !this.customerInfoExpanded;
+            },
+            togglePaymentInfo() {
+                this.paymentInfoExpanded = !this.paymentInfoExpanded;
             },
             formatAddress(address) {
                 if (!address) return '未提供';
@@ -410,12 +409,15 @@
         },
         data() {
             return {
-                reactive: true,
                 inputText: '', // 输入文本数据
                 searchResult: null, // 搜索结果
                 isLoading: false, // 加载状态
-                errorMessage: '' // 错误信息
+                errorMessage: '', // 错误信息
+                productInfoExpanded: true, // 产品信息展开状态
+                customerInfoExpanded: true, // 客户信息展开状态
+                paymentInfoExpanded: true // 支付信息展开状态
             }
-        }
+        },
+
     }
 </script>

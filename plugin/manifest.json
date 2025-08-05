@@ -13,7 +13,7 @@
       "type": "panel",
       "id": "helloworld",
       "label": {
-        "default": "Hello World"
+        "default": "订单查询系统"
       },
       "minimumSize": { "width": 230, "height": 200 },
       "maximumSize": { "width": 2000, "height": 2000 },
