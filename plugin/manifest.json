@@ -8,6 +8,11 @@
     "app": "PS",
     "minVersion": "23.0.0"
   },
+  "permissions": {
+    "network": {
+      "allowedDomains": ["img.365d4u.com", "ordertrack.365d4u.com"]
+    }
+  },
   "entrypoints": [
     {
       "type": "panel",
@@ -19,6 +24,35 @@
       "maximumSize": { "width": 2000, "height": 2000 },
       "preferredDockedSize": { "width": 230, "height": 300 },
       "preferredFloatingSize": { "width": 230, "height": 300 },
+      "icons": [
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/dark-panel.png",
+          "scale": [1, 2],
+          "theme": ["darkest", "dark", "medium"],
+          "species": ["chrome"]
+        },
+        {
+          "width": 23,
+          "height": 23,
+          "path": "icons/light-panel.png",
+          "scale": [1, 2],
+          "theme": ["lightest", "light"],
+          "species": ["chrome"]
+        }
+      ]
+    },
+    {
+      "type": "panel",
+      "id": "imageviewer",
+      "label": {
+        "default": "图片查看器"
+      },
+      "minimumSize": { "width": 300, "height": 200 },
+      "maximumSize": { "width": 2000, "height": 2000 },
+      "preferredDockedSize": { "width": 500, "height": 400 },
+      "preferredFloatingSize": { "width": 600, "height": 500 },
       "icons": [
         {
           "width": 23,

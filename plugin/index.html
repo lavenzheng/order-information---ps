@@ -1,17 +1,349 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
+    <meta charset="UTF-8" />
     <script src="./main.js"></script>
+    <style>
+      div {
+        margin: auto;
+      }
+      
+      /* 图片查看对话框样式 */
+      #imgDialog {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        padding: 10px;
+        background: white;
+        min-width: 400px;
+        min-height: 300px;
+        max-width: 90vw;
+        max-height: 90vh;
+        width: 600px;
+        height: 500px;
+        overflow: auto;
+        position: relative;
+      }
+      
+      #imgDialog::backdrop {
+        background-color: rgba(0,0,0,0.5);
+      }
+      
+      /* 自定义拖拽手柄 */
+      #resizeHandle {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        right: 4px;
+        bottom: 4px;
+        cursor: se-resize;
+        background: linear-gradient(45deg, transparent 30%, #ccc 30%, #ccc 50%, transparent 50%);
+        border-radius: 2px;
+        z-index: 1000;
+      }
+      
+      #resizeHandle:hover {
+        background: linear-gradient(45deg, transparent 30%, #999 30%, #999 50%, transparent 50%);
+      }
+      
+      .close-button {
+        padding: 8px 16px;
+        background-color: #1976d2;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-family: inherit;
+      }
+      
+      .close-button:hover {
+        background-color: #1565c0;
+      }
+      
+      .loading-text {
+        color: #666;
+        font-size: 14px;
+        text-align: center;
+        padding: 20px;
+      }
+      
+      .error-text {
+        color: #c62828;
+        font-size: 14px;
+        padding: 20px;
+        background-color: #ffebee;
+        border-radius: 4px;
+        text-align: center;
+      }
+      
+      #photo {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+    </style>
   </head>
-  <style>
-    div {
-      margin: auto;
-    }
-  </style>
 
   <body>
     <div>
       <div id="container"></div>
     </div>
+    
+    <!-- 图片查看对话框 -->
+    <dialog id="imgDialog">
+      <img id="photo" alt="加载中…" />
+      <div id="resizeHandle"></div>
+      <footer style="text-align: right; margin-top: 10px;">
+        <button class="close-button" id="closeDialogBtn">关闭</button>
+      </footer>
+    </dialog>
+    
+    <!-- 图片查看面板容器 -->
+    <div id="imageViewerPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 10000;">
+      <div style="position: absolute; top: 10px; right: 10px;">
+        <button class="close-button" id="closePanelBtn">关闭</button>
+      </div>
+      <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
+        <img id="panelPhoto" src="" alt="加载中…" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);" />
+      </div>
+      <div id="panelInfo" style="position: absolute; bottom: 10px; left: 10px; color: white; background: rgba(0,0,0,0.7); padding: 8px; border-radius: 4px; font-size: 12px;">
+        等待加载图片...
+      </div>
+    </div>
+
+    <script>
+      // 图片查看对话框功能
+      const imgDialog = document.getElementById('imgDialog');
+      const photo = document.getElementById('photo');
+      const closeDialogBtn = document.getElementById('closeDialogBtn');
+      const resizeHandle = document.getElementById('resizeHandle');
+      
+      // 图片查看面板功能
+      const imageViewerPanel = document.getElementById('imageViewerPanel');
+      const panelPhoto = document.getElementById('panelPhoto');
+      const panelInfo = document.getElementById('panelInfo');
+      const closePanelBtn = document.getElementById('closePanelBtn');
+      
+      // 关闭对话框
+      closeDialogBtn.addEventListener('click', () => {
+        imgDialog.close();
+      });
+      
+      // 点击对话框外部关闭
+      imgDialog.addEventListener('click', (event) => {
+        if (event.target === imgDialog) {
+          imgDialog.close();
+        }
+      });
+      
+      // 自定义拖拽缩放
+      let resizing = false;
+      let startX, startY, startW, startH;
+      
+      resizeHandle.addEventListener('pointerdown', (e) => {
+        resizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startW = imgDialog.offsetWidth;
+        startH = imgDialog.offsetHeight;
+        e.preventDefault();
+      });
+      
+      window.addEventListener('pointermove', (e) => {
+        if (!resizing) return;
+        
+        const newWidth = Math.max(400, Math.min(90 * window.innerWidth / 100, startW + e.clientX - startX));
+        const newHeight = Math.max(300, Math.min(90 * window.innerHeight / 100, startH + e.clientY - startY));
+        
+        imgDialog.style.width = newWidth + 'px';
+        imgDialog.style.height = newHeight + 'px';
+      });
+      
+      window.addEventListener('pointerup', () => {
+        resizing = false;
+      });
+      
+      // 关闭图片查看面板
+      closePanelBtn.addEventListener('click', () => {
+        imageViewerPanel.style.display = 'none';
+      });
+      
+      // 点击面板背景关闭
+      imageViewerPanel.addEventListener('click', (event) => {
+        if (event.target === imageViewerPanel) {
+          imageViewerPanel.style.display = 'none';
+        }
+      });
+      
+              // 全局函数：显示图片面板
+        window.showImagePanel = async function(imageUrl) {
+          console.log('=== 图片面板调试信息 ===');
+          console.log('图片URL:', imageUrl);
+          console.log('网络状态:', navigator.onLine ? '在线' : '离线');
+          
+          if (!imageUrl) {
+            console.error('错误：未提供图片URL');
+            panelInfo.textContent = '未提供图片URL';
+            imageViewerPanel.style.display = 'block';
+            return;
+          }
+          
+          // 显示面板
+          imageViewerPanel.style.display = 'block';
+          panelInfo.textContent = '正在加载图片...';
+          
+          try {
+            console.log('开始加载图片:', imageUrl);
+            
+            // 先测试一个简单的图片，看看面板是否工作
+            console.log('测试面板功能...');
+            panelPhoto.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZmYwMDAwIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIyMCIgZmlsbD0iI2ZmZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPlRlc3QgSW1hZ2U8L3RleHQ+PC9zdmc+';
+            
+            // 延迟加载实际图片
+            setTimeout(() => {
+              console.log('加载实际图片:', imageUrl);
+              panelPhoto.src = imageUrl;
+              
+              // 添加加载事件监听
+              panelPhoto.onload = function() {
+                console.log('✅ 面板图片加载成功:', imageUrl);
+                console.log('图片尺寸:', panelPhoto.naturalWidth, 'x', panelPhoto.naturalHeight);
+                panelInfo.textContent = `图片尺寸: ${panelPhoto.naturalWidth} x ${panelPhoto.naturalHeight}`;
+              };
+              
+              panelPhoto.onerror = function() {
+                console.error('❌ 面板图片加载失败:', imageUrl);
+                panelInfo.textContent = '图片加载失败';
+                
+                // 尝试方法2：使用Image对象
+                console.log('方法2：使用Image对象');
+                const testImg = new Image();
+                testImg.onload = function() {
+                  console.log('✅ Image对象加载成功:', imageUrl);
+                  panelPhoto.src = imageUrl;
+                  panelInfo.textContent = `图片尺寸: ${testImg.naturalWidth} x ${testImg.naturalHeight}`;
+                };
+                
+                testImg.onerror = function() {
+                  console.error('❌ Image对象也加载失败:', imageUrl);
+                  panelInfo.textContent = '所有方法都失败了';
+                  
+                  // 显示错误信息
+                  const errorDiv = document.createElement('div');
+                  errorDiv.style.cssText = 'color: #ff6b6b; font-size: 14px; text-align: center; padding: 20px; background: rgba(255, 107, 107, 0.1); border-radius: 4px; margin: 20px;';
+                  errorDiv.innerHTML = '图片加载失败<br><br>URL: ' + imageUrl + '<br><br>可能的原因：<br>1. 网络连接问题<br>2. 图片URL无效<br>3. 跨域访问限制';
+                  
+                  // 清空面板内容并添加错误信息
+                  const panelContent = imageViewerPanel.querySelector('div:nth-child(2)');
+                  panelContent.innerHTML = '';
+                  panelContent.appendChild(errorDiv);
+                };
+                
+                testImg.src = imageUrl;
+              };
+            }, 1000);
+            
+          } catch (error) {
+            console.error('图片加载错误:', error);
+            panelInfo.textContent = '图片加载失败: ' + error.message;
+          }
+        };
+        
+        // 全局函数：显示图片对话框
+        window.showImageDialog = async function(imageUrl) {
+        console.log('=== 图片对话框调试信息 ===');
+        console.log('图片URL:', imageUrl);
+        console.log('网络状态:', navigator.onLine ? '在线' : '离线');
+        
+        if (!imageUrl) {
+          console.error('错误：未提供图片URL');
+          photo.alt = '未提供图片URL';
+          imgDialog.showModal();
+          return;
+        }
+        
+        // 显示加载状态
+        photo.alt = '加载中…';
+        imgDialog.showModal();
+        
+        try {
+          // 直接设置图片src，就像参考附件那样
+          console.log('开始加载图片:', imageUrl);
+          
+          // 创建测试图片来获取尺寸信息
+          const testImg = new Image();
+          testImg.onload = function() {
+            console.log('✅ 图片加载成功:', imageUrl);
+            console.log('图片尺寸:', testImg.naturalWidth, 'x', testImg.naturalHeight);
+            
+            // 直接设置对话框图片的src
+            photo.src = imageUrl;
+            photo.alt = '参考附件';
+          };
+          
+          testImg.onerror = function() {
+            console.error('❌ 图片加载失败:', imageUrl);
+            photo.alt = '图片加载失败';
+            showError(imageUrl);
+          };
+          
+          // 开始加载测试图片
+          testImg.src = imageUrl;
+          
+        } catch (error) {
+          console.error('图片加载错误:', error);
+          photo.alt = '图片加载失败';
+          showError(imageUrl);
+        }
+      };
+      
+      // 显示错误信息
+      function showError(imageUrl) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-text';
+        errorContainer.innerHTML = '图片加载失败<br><br>图片URL: ' + imageUrl + '<br><br>可能的原因：<br>1. 网络连接问题<br>2. 图片URL无效<br>3. 跨域访问限制';
+        
+        const testButton = document.createElement('button');
+        testButton.textContent = '测试网络连接';
+        testButton.style.cssText = 'padding: 5px 10px; background: #1976d2; color: white; border: none; border-radius: 3px; cursor: pointer; margin-top: 10px;';
+        testButton.addEventListener('click', () => {
+          window.testNetworkConnection();
+        });
+        
+        // 清空对话框内容并添加错误信息
+        imgDialog.innerHTML = '';
+        imgDialog.appendChild(errorContainer);
+        imgDialog.appendChild(testButton);
+        imgDialog.appendChild(resizeHandle);
+        imgDialog.appendChild(closeDialogBtn.parentElement);
+      }
+      
+      // 网络连接测试
+      window.testNetworkConnection = function() {
+        console.log('=== 网络连接测试 ===');
+        
+        // 测试基本网络连接
+        fetch('https://httpbin.org/get', { method: 'GET' })
+          .then(response => {
+            console.log('✅ 基本网络连接正常:', response.status);
+          })
+          .catch(error => {
+            console.error('❌ 基本网络连接失败:', error);
+          });
+        
+        // 测试目标域名连接
+        fetch('https://img.365d4u.com', { method: 'HEAD' })
+          .then(response => {
+            console.log('✅ 目标域名连接正常:', response.status);
+          })
+          .catch(error => {
+            console.error('❌ 目标域名连接失败:', error);
+          });
+      };
+    </script>
   </body>
 </html>

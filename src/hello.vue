@@ -189,16 +189,33 @@ module.exports = {
             console.log('openImage 被调用，URL:', imageUrl);
             if (imageUrl) {
                 try {
-                    const uxp = require('uxp');
-                    if (uxp && uxp.shell && uxp.shell.openExternal) {
-                        uxp.shell.openExternal(imageUrl);
-                        console.log('使用默认浏览器打开图片');
+                    // 使用新的图片面板功能
+                    if (window.showImagePanel) {
+                        window.showImagePanel(imageUrl);
+                        console.log('图片面板打开成功');
                     } else {
-                        console.log('uxp.shell.openExternal 不可用');
+                        console.log('showImagePanel 函数不可用，使用备用方案');
+                        this.openInBrowser(imageUrl);
                     }
                 } catch (error) {
-                    console.error('打开图片时出错:', error);
+                    console.error('打开图片面板失败:', error);
+                    // 备用方案：在浏览器中打开
+                    this.openInBrowser(imageUrl);
                 }
+            }
+        },
+        
+        openInBrowser(imageUrl) {
+            try {
+                const uxp = require('uxp');
+                if (uxp && uxp.shell && uxp.shell.openExternal) {
+                    uxp.shell.openExternal(imageUrl);
+                    console.log('在默认浏览器中打开图片');
+                } else {
+                    console.log('uxp.shell.openExternal 不可用');
+                }
+            } catch (error) {
+                console.error('在浏览器中打开图片失败:', error);
             }
         }
     },
@@ -217,85 +234,5 @@ module.exports = {
 </script>
 
 <style>
-/* 确保样式正确应用 */
-.info-row {
-    display: flex;
-    margin-bottom: 8px;
-    font-size: 16px;
-}
-
-.info-label {
-    font-weight: bold;
-    width: 120px;
-    flex-shrink: 0;
-    font-size: 16px;
-}
-
-.info-value {
-    flex: 1;
-    font-size: 16px;
-}
-
-.product-no {
-    color: #1976d2;
-    font-weight: bold;
-}
-
-.product-status {
-    color: #d32f2f;
-}
-
-.product-progress {
-    color: #d32f2f;
-}
-
-.total-price {
-    color: #d32f2f;
-    font-weight: bold;
-    font-size: 16px;
-}
-
-.paid-amount {
-    color: #2e7d32;
-    font-weight: bold;
-    font-size: 16px;
-}
-
-.customer-no {
-    color: #1976d2;
-}
-
-.more-detail-link {
-    color: #1976d2;
-    text-decoration: underline;
-}
-
-.customize-info-line {
-    margin-bottom: 2px;
-}
-
-.customize-info-key {
-    font-weight: bold;
-    color: #000000;
-}
-
-.customize-info-value {
-    margin-left: 5px;
-}
-
-.reference-image {
-    max-width: 200px;
-    max-height: 150px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.address-text {
-    word-break: break-all;
-}
-
-.collapsible-content {
-    padding: 15px 8px;
-}
+/* 样式已移至 main.css 文件中统一管理 */
 </style>
