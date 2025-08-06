@@ -1,5 +1,6 @@
 import Vue from "vue";
 import hello from "./hello.vue";
+import "./styles/main.css";
 
 const { entrypoints } = require("uxp");
 

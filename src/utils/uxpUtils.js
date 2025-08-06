@@ -1,0 +1,81 @@
+/**
+ * UXP工具函数
+ * 处理UXP相关的功能
+ */
+
+/**
+ * 在默认浏览器中打开URL
+ * @param {string} url - 要打开的URL
+ * @returns {boolean} 是否成功打开
+ */
+export function openExternalUrl(url) {
+    if (!url) {
+        console.error('URL不能为空');
+        return false;
+    }
+
+    try {
+        const uxp = require('uxp');
+        if (uxp && uxp.shell && uxp.shell.openExternal) {
+            uxp.shell.openExternal(url);
+            console.log('使用默认浏览器打开URL:', url);
+            return true;
+        } else {
+            console.log('uxp.shell.openExternal 不可用');
+            return false;
+        }
+    } catch (error) {
+        console.error('打开外部URL时出错:', error);
+        return false;
+    }
+}
+
+/**
+ * 创建图片对话框
+ * @param {string} imageUrl - 图片URL
+ * @returns {boolean} 是否成功创建对话框
+ */
+export function createImageDialog(imageUrl) {
+    if (!imageUrl) {
+        console.error('图片URL不能为空');
+        return false;
+    }
+
+    try {
+        const uxp = require('uxp');
+        if (uxp && uxp.dialogs && uxp.dialogs.createDialog) {
+            const dialog = uxp.dialogs.createDialog({
+                title: '参考附件',
+                width: 600,
+                height: 400,
+                resizable: true
+            });
+
+            dialog.innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <img src="${imageUrl}" alt="参考附件" 
+                         style="max-width: 100%; max-height: 100%; object-fit: contain;" />
+                </div>
+            `;
+
+            dialog.show();
+            console.log('创建图片对话框成功');
+            return true;
+        } else {
+            console.log('uxp.dialogs.createDialog 不可用');
+            return false;
+        }
+    } catch (error) {
+        console.error('创建图片对话框时出错:', error);
+        return false;
+    }
+}
+
+/**
+ * 显示图片URL信息
+ * @param {string} imageUrl - 图片URL
+ */
+export function showImageUrl(imageUrl) {
+    console.log('图片URL:', imageUrl);
+    // 可以在这里添加其他显示逻辑，比如在插件内显示URL
+} 

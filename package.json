@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "watch": "nodemon --watch src --ext js,vue,css --exec \"npm run build\"",
-    "build": "webpack --mode development",
+    "watch": "cross-env NODE_OPTIONS=\"--openssl-legacy-provider\" nodemon --watch src --ext js,vue,css --exec \"npm run build\"",
+    "build": "cross-env NODE_OPTIONS=\"--openssl-legacy-provider\" webpack --mode development",
     "uxp:load": "cd dist && uxp plugin load",
     "uxp:reload": "cd dist && uxp plugin reload",
     "uxp:watch": "cd dist && nodemon --exec \"uxp plugin reload\" -e js,css,html",
@@ -15,7 +15,8 @@
   "devDependencies": {
     "clean-webpack-plugin": "^2.0.2",
     "copy-webpack-plugin": "^5.0.3",
-    "css-loader": "^5.2.0",
+    "cross-env": "^10.0.0",
+    "css-loader": "^5.2.7",
     "file-loader": "^5.1.0",
     "nodemon": "^2.0.7",
     "style-loader": "^2.0.0",

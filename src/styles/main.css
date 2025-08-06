@@ -1,0 +1,396 @@
+/**
+ * Adobe Photoshop UXP 插件样式文件
+ * 订单查询系统 - 主样式定义
+ * 
+ * 文件说明：
+ * - 定义插件的全局样式和布局
+ * - 使用CSS类名系统，便于统一管理和维护
+ * - 支持响应式设计和UXP环境兼容
+ * 
+ * 作者：AI Assistant
+ * 创建时间：2025-08-06
+ * 版本：1.0.0
+ */
+
+/* ========================================
+ * 1. 基础容器样式
+ * ======================================== */
+
+/**
+ * 插件主容器
+ * 作用：定义整个插件的基础布局结构
+ * 特点：全屏高度，弹性布局，垂直排列
+ */
+.plugin-container {
+    padding: 1px;                    /* 最小内边距，避免内容贴边 */
+    height: 100vh;                   /* 全屏高度，适配不同屏幕 */
+    display: flex;                    /* 弹性布局 */
+    flex-direction: column;           /* 垂直排列子元素 */
+}
+
+/* ========================================
+ * 2. 搜索区域样式
+ * ======================================== */
+
+/**
+ * 搜索区域容器
+ * 作用：包含搜索输入框和操作按钮
+ * 布局：水平排列，居中对齐
+ */
+.search-area {
+    display: flex;                    /* 弹性布局 */
+    align-items: center;              /* 垂直居中对齐 */
+    margin-top: 20px;                 /* 顶部间距 */
+    gap: 10px;                        /* 元素间距 */
+    flex-shrink: 0;                   /* 防止收缩 */
+}
+
+/**
+ * 搜索输入框
+ * 作用：用户输入产品编号的文本框
+ */
+.search-input {
+    flex: 1;                          /* 占据剩余空间 */
+}
+
+/**
+ * 搜索按钮
+ * 作用：触发搜索功能的按钮
+ */
+.search-button {
+    margin-left: 10px;                /* 左侧间距 */
+}
+
+/**
+ * 清空按钮
+ * 作用：清空输入框内容的按钮
+ */
+.clear-button {
+    margin-left: 5px;                 /* 左侧间距 */
+}
+
+/* ========================================
+ * 3. 状态显示样式
+ * ======================================== */
+
+/**
+ * 加载状态
+ * 作用：显示搜索进行中的状态
+ */
+.loading-state {
+    margin-top: 20px;                 /* 顶部间距 */
+    text-align: center;               /* 文字居中 */
+    flex-shrink: 0;                   /* 防止收缩 */
+}
+
+/**
+ * 错误状态
+ * 作用：显示搜索错误或异常信息
+ */
+.error-state {
+    margin-top: 20px;                 /* 顶部间距 */
+    color: #d32f2f;                   /* 错误红色 */
+    flex-shrink: 0;                   /* 防止收缩 */
+}
+
+/* ========================================
+ * 4. 搜索结果容器样式
+ * ======================================== */
+
+/**
+ * 搜索结果主容器
+ * 作用：包含所有搜索结果的显示区域
+ * 布局：绝对定位，自适应窗口大小
+ */
+.search-results-container {
+    margin-top: 5px;                  /* 顶部间距 */
+    position: absolute;                /* 绝对定位 */
+    top: 60px;                        /* 距离顶部60px */
+    left: 8px;                        /* 距离左边8px */
+    right: 8px;                       /* 距离右边8px */
+    bottom: 8px;                      /* 距离底部8px */
+}
+
+/**
+ * 无结果提示
+ * 作用：当搜索无结果时显示提示信息
+ */
+.no-results {
+    margin-top: 10px;                 /* 顶部间距 */
+    color: #666;                      /* 灰色文字 */
+}
+
+/**
+ * 结果包装器
+ * 作用：为搜索结果提供边框和背景
+ * 特点：可滚动，有边框和圆角
+ */
+.results-wrapper {
+    border: 1px solid #ddd;           /* 边框 */
+    border-radius: 5px;               /* 圆角 */
+    padding: 8px;                     /* 内边距 */
+    background-color: #f9f9f9;        /* 浅灰背景 */
+    height: 100%;                     /* 全高度 */
+    overflow-y: auto;                 /* 垂直滚动 */
+}
+
+/* ========================================
+ * 5. 产品卡片样式
+ * ======================================== */
+
+/**
+ * 产品信息卡片
+ * 作用：显示单个产品的完整信息
+ * 特点：白色背景，有边框和圆角
+ */
+.product-card {
+    margin-bottom: 5px;               /* 底部间距 */
+    padding: 10px;                    /* 内边距 */
+    border: 1px solid #eee;           /* 边框 */
+    border-radius: 5px;               /* 圆角 */
+    background-color: white;           /* 白色背景 */
+}
+
+/* ========================================
+ * 6. 可折叠区域样式
+ * ======================================== */
+
+/**
+ * 可折叠区域容器
+ * 作用：为可折叠内容提供容器
+ */
+.collapsible-section {
+    margin-bottom: 20px;              /* 底部间距 */
+}
+
+/**
+ * 可折叠区域标题栏
+ * 作用：显示区域标题和展开/收起状态
+ * 特点：可点击，有渐变背景和阴影
+ */
+.collapsible-header {
+    display: flex;                    /* 弹性布局 */
+    align-items: center;              /* 垂直居中 */
+    justify-content: space-between;   /* 两端对齐 */
+    padding: 12px 16px;              /* 内边距 */
+    cursor: pointer;                  /* 鼠标指针 */
+    user-select: none;                /* 禁止选择文字 */
+    transition: all 0.3s ease;        /* 过渡动画 */
+    background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%); /* 渐变背景 */
+    border-radius: 8px;               /* 圆角 */
+    margin-bottom: 12px;              /* 底部间距 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* 阴影效果 */
+    position: relative;                /* 相对定位 */
+    overflow: hidden;                  /* 隐藏溢出 */
+}
+
+/**
+ * 可折叠区域标题文字
+ * 作用：显示区域名称
+ * 特点：粗体，有文字阴影，现代字体
+ */
+.collapsible-title {
+    color: #333333;                   /* 深灰色 */
+    font-weight: 700;                 /* 粗体 */
+    font-size: 18px;                  /* 字体大小 */
+    flex: 1;                          /* 占据剩余空间 */
+    pointer-events: none;             /* 禁止鼠标事件 */
+    /* font-family: 'Microsoft YaHei', '微软雅黑', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 微软雅黑字体 */
+    /* font-family: 'PingFang SC', 'Helvetica Neue', Arial, sans-serif; */
+    /* font-family: 'Source Han Sans CN', 'Noto Sans CJK SC', sans-serif; */
+    font-family: 'Arial Black', 'Helvetica Bold', 'Microsoft YaHei', sans-serif;
+    text-shadow: 0 1px 2px rgba(255,255,255,0.5); /* 白色文字阴影 */
+    position: relative;                /* 相对定位 */
+    z-index: 1;                       /* 层级 */
+}
+
+/**
+ * 可折叠区域箭头
+ * 作用：显示展开/收起状态的箭头图标
+ */
+.collapsible-arrow {
+    font-size: 14px;                  /* 字体大小 */
+    color: #666666;                   /* 灰色 */
+    pointer-events: none;             /* 禁止鼠标事件 */
+    position: relative;                /* 相对定位 */
+    z-index: 1;                       /* 层级 */
+    font-weight: bold;                /* 粗体 */
+}
+
+/**
+ * 可折叠区域内容
+ * 作用：显示可折叠的具体内容
+ */
+.collapsible-content {
+    padding: 15px 8px;               /* 内边距 */
+}
+
+/* ========================================
+ * 7. 信息行样式
+ * ======================================== */
+
+/**
+ * 信息行容器
+ * 作用：显示标签和值的行容器
+ * 布局：水平排列，标签固定宽度，值自适应
+ */
+.info-row {
+    display: flex;                    /* 弹性布局 */
+    margin-bottom: 8px;               /* 底部间距 */
+    font-size: 16px;                  /* 字体大小 */
+}
+
+/**
+ * 信息标签
+ * 作用：显示字段名称
+ * 特点：固定宽度，粗体，不收缩
+ */
+.info-label {
+    font-weight: bold;                /* 粗体 */
+    width: 120px;                     /* 固定宽度 */
+    flex-shrink: 0;                   /* 禁止收缩 */
+    font-size: 16px;                  /* 字体大小 */
+}
+
+/**
+ * 信息值
+ * 作用：显示字段的具体值
+ * 特点：自适应宽度，占据剩余空间
+ */
+.info-value {
+    flex: 1;                          /* 占据剩余空间 */
+    font-size: 16px;                  /* 字体大小 */
+}
+
+/* ========================================
+ * 8. 特殊样式类
+ * ======================================== */
+
+/**
+ * 产品编号样式
+ * 作用：突出显示产品编号
+ * 特点：蓝色，粗体
+ */
+.product-no {
+    color: #1976d2;                   /* 蓝色 */
+    font-weight: bold;                /* 粗体 */
+}
+
+/**
+ * 产品状态样式
+ * 作用：显示产品当前状态
+ * 特点：红色，表示状态信息
+ */
+.product-status {
+    color: #d32f2f;                   /* 红色 */
+}
+
+/**
+ * 产品进度样式
+ * 作用：显示产品制作进度
+ * 特点：红色，表示进度信息
+ */
+.product-progress {
+    color: #d32f2f;                   /* 红色 */
+}
+
+/**
+ * 总价格样式
+ * 作用：突出显示总价格
+ * 特点：红色，粗体，较大字体
+ */
+.total-price {
+    color: #d32f2f;                   /* 红色 */
+    font-weight: bold;                /* 粗体 */
+    font-size: 16px;                  /* 字体大小 */
+}
+
+/**
+ * 已付金额样式
+ * 作用：显示已支付的金额
+ * 特点：绿色，粗体，表示已完成的支付
+ */
+.paid-amount {
+    color: #2e7d32;                   /* 绿色 */
+    font-weight: bold;                /* 粗体 */
+    font-size: 16px;                  /* 字体大小 */
+}
+
+/**
+ * 客户编号样式
+ * 作用：显示客户编号
+ * 特点：蓝色，便于识别
+ */
+.customer-no {
+    color: #1976d2;                   /* 蓝色 */
+}
+
+/**
+ * 更多详情链接样式
+ * 作用：显示可点击的详情链接
+ * 特点：蓝色，有下划线
+ */
+.more-detail-link {
+    color: #1976d2;                   /* 蓝色 */
+    text-decoration: underline;       /* 下划线 */
+}
+
+/* ========================================
+ * 9. 定制信息样式
+ * ======================================== */
+
+/**
+ * 定制信息行
+ * 作用：显示定制信息的每一行
+ */
+.customize-info-line {
+    margin-bottom: 2px;               /* 底部间距 */
+}
+
+/**
+ * 定制信息键
+ * 作用：显示定制信息的字段名
+ * 特点：粗体，黑色
+ */
+.customize-info-key {
+    font-weight: bold;                /* 粗体 */
+    color: #000000;                   /* 黑色 */
+}
+
+/**
+ * 定制信息值
+ * 作用：显示定制信息的具体值
+ */
+.customize-info-value {
+    margin-left: 5px;                 /* 左侧间距 */
+}
+
+/* ========================================
+ * 10. 图片样式
+ * ======================================== */
+
+/**
+ * 参考附件图片
+ * 作用：显示产品相关的参考图片
+ * 特点：可点击，有边框和圆角
+ */
+.reference-image {
+    max-width: 200px;                 /* 最大宽度 */
+    max-height: 150px;                /* 最大高度 */
+    border: 1px solid #ddd;           /* 边框 */
+    border-radius: 4px;               /* 圆角 */
+    cursor: pointer;                  /* 鼠标指针 */
+}
+
+/* ========================================
+ * 11. 地址文本样式
+ * ======================================== */
+
+/**
+ * 地址文本样式
+ * 作用：显示长地址文本
+ * 特点：自动换行，防止溢出
+ */
+.address-text {
+    word-break: break-all;            /* 强制换行 */
+} 
