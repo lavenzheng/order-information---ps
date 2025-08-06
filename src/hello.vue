@@ -225,17 +225,17 @@ module.exports = {
             }
         }
     },
-    data() {
-        return {
-            inputText: '',
-            searchResult: null,
-            isLoading: false,
-            errorMessage: '',
-            productInfoExpanded: false,
-            customerInfoExpanded: false,
-            paymentInfoExpanded: false
-        };
-    }
+            data() {
+            return {
+                inputText: '',
+                searchResult: null,
+                isLoading: false,
+                errorMessage: '',
+                productInfoExpanded: true,    // 默认展开产品信息
+                customerInfoExpanded: false,   // 默认展开客户信息
+                paymentInfoExpanded: false     // 默认展开支付信息
+            };
+        }
 };
 </script>
 
