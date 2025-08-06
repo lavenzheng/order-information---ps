@@ -300,9 +300,9 @@
       // 面板滚轮缩放处理函数
       function handleZoom(e) {
         if (isImagePanelOpen) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation();
+          e.preventDefault();          // 阻止默认滚动
+          e.stopPropagation();         // 阻止事件冒泡到宿主容器
+          e.stopImmediatePropagation(); // 阻止同一元素上的其他监听器
           const dir = e.deltaY < 0 ? 1 : -1;
           currentZoom = Math.min(maxZoom, Math.max(minZoom, currentZoom + dir * zoomStep));
           updateZoom();
@@ -313,9 +313,9 @@
       
       // 对话框滚轮缩放处理函数
       function handleZoomDialog(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation();
+        e.preventDefault();          // 阻止默认滚动
+        e.stopPropagation();         // 阻止事件冒泡到宿主容器
+        e.stopImmediatePropagation(); // 阻止同一元素上的其他监听器
         const dir = e.deltaY < 0 ? 1 : -1;
         imgDialogZoom = Math.min(maxZoom, Math.max(minZoom, imgDialogZoom + dir * zoomStep));
         photo.style.transform = `scale(${imgDialogZoom})`;
@@ -370,6 +370,7 @@
           }
           event.preventDefault();
           event.stopPropagation();
+          event.stopImmediatePropagation();
           return false;
         }
       }, { capture: true });
