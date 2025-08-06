@@ -186,11 +186,16 @@ module.exports = {
         },
         
         openImage(imageUrl) {
+            console.log('=== openImage 调试信息 ===');
             console.log('openImage 被调用，URL:', imageUrl);
+            console.log('window.showImagePanel 类型:', typeof window.showImagePanel);
+            console.log('window.showImagePanel 值:', window.showImagePanel);
+            
             if (imageUrl) {
                 try {
                     // 使用新的图片面板功能
                     if (window.showImagePanel) {
+                        console.log('调用 showImagePanel...');
                         window.showImagePanel(imageUrl);
                         console.log('图片面板打开成功');
                     } else {
@@ -199,6 +204,7 @@ module.exports = {
                     }
                 } catch (error) {
                     console.error('打开图片面板失败:', error);
+                    console.error('错误详情:', error.stack);
                     // 备用方案：在浏览器中打开
                     this.openInBrowser(imageUrl);
                 }
