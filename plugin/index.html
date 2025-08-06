@@ -133,6 +133,26 @@
       #imageViewerPanel, #imageContainer {
         overscroll-behavior: contain;
         overscroll-behavior-y: contain;
+        overflow: hidden;
+      }
+      
+      /* 确保插件根元素也不会传递滚动 */
+      html, body {
+        overscroll-behavior: none;
+      }
+      
+      /* 对话框禁用滚动 */
+      #imgDialog {
+        overflow: hidden !important;
+      }
+      
+      /* 对话框图片样式 */
+      #photo {
+        transform-origin: center center;
+        transition: transform 0.1s;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
       }
       
       /* 禁用图片拖拽 */
@@ -156,8 +176,8 @@
     </div>
     
     <!-- 图片查看对话框 -->
-    <dialog id="imgDialog">
-      <img id="photo" alt="加载中…" />
+    <dialog id="imgDialog" onwheel="handleZoomDialog(event)" onmousewheel="handleZoomDialog(event)">
+      <img id="photo" alt="加载中…" onwheel="handleZoomDialog(event)" onmousewheel="handleZoomDialog(event)" />
       <div id="resizeHandle"></div>
       <footer style="text-align: right; margin-top: 10px;">
         <button class="close-button" id="closeDialogBtn">关闭</button>
@@ -165,9 +185,9 @@
     </dialog>
     
     <!-- 图片查看面板容器 -->
-    <div id="imageViewerPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); overflow: hidden; z-index: 999999;">
-      <div id="imageContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; touch-action: none; overscroll-behavior: contain;" tabindex="0">
-        <img id="panelPhoto" src="" alt="加载中…" style="transform-origin: center center; transition: transform 0.1s; max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); user-select: none;" />
+    <div id="imageViewerPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); overflow: hidden; z-index: 999999;" onwheel="handleZoom(event)" onmousewheel="handleZoom(event)">
+      <div id="imageContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; touch-action: none; overscroll-behavior: contain;" tabindex="0" onwheel="handleZoom(event)" onmousewheel="handleZoom(event)">
+        <img id="panelPhoto" src="" alt="加载中…" style="transform-origin: center center; transition: transform 0.1s; max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); user-select: none;" onwheel="handleZoom(event)" onmousewheel="handleZoom(event)" />
       </div>
       <div id="zoomInfo" style="position: absolute; bottom: 8px; left: 8px; color: #fff; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; font-size: 12px;">100%</div>
       <button id="closePanelBtn" class="close-button" style="position: absolute; bottom: 8px; right: 8px;">× 关闭</button>
@@ -189,6 +209,7 @@
       
       // 缩放状态
       let currentZoom = 1;
+      let imgDialogZoom = 1; // 对话框的缩放状态
       let minZoom = 0.1;
       let maxZoom = 5.0;
       let zoomStep = 0.1;
@@ -196,12 +217,18 @@
       // 关闭对话框
       closeDialogBtn.addEventListener('click', () => {
         imgDialog.close();
+        // 恢复背景滚动
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
       });
       
       // 点击对话框外部关闭
       imgDialog.addEventListener('click', (event) => {
         if (event.target === imgDialog) {
           imgDialog.close();
+          // 恢复背景滚动
+          document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
         }
       });
       
@@ -270,22 +297,43 @@
       
 
       
-      // 完全拦截滚轮事件
-      function onWheel(e) {
+      // 面板滚轮缩放处理函数
+      function handleZoom(e) {
         if (isImagePanelOpen) {
           e.preventDefault();
+          e.stopPropagation();
           e.stopImmediatePropagation();
           const dir = e.deltaY < 0 ? 1 : -1;
           currentZoom = Math.min(maxZoom, Math.max(minZoom, currentZoom + dir * zoomStep));
           updateZoom();
-          console.log('滚轮缩放:', currentZoom);
+          console.log('面板滚轮缩放:', currentZoom);
           return false;
         }
       }
       
-      // 在 document 和 window 两个层级都拦截 wheel
-      document.addEventListener('wheel', onWheel, { passive: false, capture: true });
-      window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+      // 对话框滚轮缩放处理函数
+      function handleZoomDialog(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        const dir = e.deltaY < 0 ? 1 : -1;
+        imgDialogZoom = Math.min(maxZoom, Math.max(minZoom, imgDialogZoom + dir * zoomStep));
+        photo.style.transform = `scale(${imgDialogZoom})`;
+        console.log('对话框滚轮缩放:', imgDialogZoom);
+        return false;
+      }
+      
+      // 将滚轮监听添加到图片容器 - 这是关键
+      imageContainer.addEventListener('wheel', handleZoom, { passive: false });
+      imageContainer.addEventListener('mousewheel', handleZoom, { passive: false });
+      
+      // 同时在面板级别也监听
+      imageViewerPanel.addEventListener('wheel', handleZoom, { passive: false });
+      imageViewerPanel.addEventListener('mousewheel', handleZoom, { passive: false });
+      
+      // 为对话框添加滚轮监听
+      imgDialog.addEventListener('wheel', handleZoomDialog, { passive: false });
+      imgDialog.addEventListener('mousewheel', handleZoomDialog, { passive: false });
       
 
       
@@ -326,7 +374,7 @@
         }
       }, { capture: true });
       
-            // 全局函数：显示图片面板
+                  // 全局函数：显示图片面板
       window.showImagePanel = async function(imageUrl) {
         console.log('=== 图片面板调试信息 ===');
         console.log('showImagePanel 函数被调用');
@@ -334,23 +382,30 @@
         console.log('网络状态:', navigator.onLine ? '在线' : '离线');
         console.log('imageViewerPanel 元素:', imageViewerPanel);
         console.log('panelPhoto 元素:', panelPhoto);
-          
-          if (!imageUrl) {
-            console.error('错误：未提供图片URL');
-            imageViewerPanel.style.display = 'flex';
-            return;
-          }
-          
-          // 重置缩放状态
-          currentZoom = 1;
-          updateZoom();
-          
-          // 显示面板
+        
+        if (!imageUrl) {
+          console.error('错误：未提供图片URL');
           imageViewerPanel.style.display = 'flex';
-          isImagePanelOpen = true;
-          
-          // 让容器获得焦点，确保滚轮事件被捕获
-          imageContainer.focus();
+          return;
+        }
+        
+        // 立即设置面板状态和阻止滚动 - 这是关键
+        isImagePanelOpen = true;
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.top = '0';
+        
+        // 重置缩放状态
+        currentZoom = 1;
+        updateZoom();
+        
+        // 显示面板
+        imageViewerPanel.style.display = 'flex';
+        
+        // 让容器获得焦点，确保滚轮事件被捕获
+        imageContainer.focus();
           
           console.log('面板显示状态:', imageViewerPanel.style.display);
           console.log('面板可见性:', imageViewerPanel.offsetWidth, 'x', imageViewerPanel.offsetHeight);
@@ -358,12 +413,7 @@
           console.log('面板z-index:', imageViewerPanel.style.zIndex);
           console.log('面板背景色:', imageViewerPanel.style.backgroundColor);
           
-          // 阻止背景页面滚动
-          document.body.style.overflow = 'hidden';
-          document.documentElement.style.overflow = 'hidden';
-          document.body.style.position = 'fixed';
-          document.body.style.width = '100%';
-          document.body.style.top = '0';
+
           
           zoomInfo.textContent = '100%';
           
@@ -385,10 +435,14 @@
                 console.log('图片尺寸:', panelPhoto.naturalWidth, 'x', panelPhoto.naturalHeight);
                 
                 // 确保图片加载完成后也绑定滚轮事件
-                panelPhoto.addEventListener('wheel', onWheel, { passive: false, capture: true });
+                panelPhoto.addEventListener('wheel', handleZoom, { passive: false });
+                panelPhoto.addEventListener('mousewheel', handleZoom, { passive: false });
                 
                 // 图片加载完成后再次让容器获得焦点
                 imageContainer.focus();
+                
+                // 重置对话框缩放状态
+                imgDialogZoom = 1;
               };
               
               panelPhoto.onerror = function() {
@@ -450,6 +504,11 @@
         
         // 显示加载状态
         photo.alt = '加载中…';
+        
+        // 阻止背景滚动
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        
         imgDialog.showModal();
         
         try {
@@ -465,6 +524,13 @@
             // 直接设置对话框图片的src
             photo.src = imageUrl;
             photo.alt = '参考附件';
+            
+            // 为对话框图片添加滚轮事件监听
+            photo.addEventListener('wheel', handleZoomDialog, { passive: false });
+            photo.addEventListener('mousewheel', handleZoomDialog, { passive: false });
+            
+            // 重置对话框缩放状态
+            imgDialogZoom = 1;
           };
           
           testImg.onerror = function() {
