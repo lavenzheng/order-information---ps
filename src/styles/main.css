@@ -317,6 +317,17 @@
 }
 
 /**
+ * 剩余金额样式
+ * 作用：显示剩余需要支付的金额
+ * 特点：橙色，粗体，表示待支付
+ */
+.remaining-amount {
+    color: #f57c00;                   /* 橙色 */
+    font-weight: bold;                /* 粗体 */
+    font-size: 16px;                  /* 字体大小 */
+}
+
+/**
  * 客户编号样式
  * 作用：显示客户编号
  * 特点：蓝色，便于识别
@@ -331,6 +342,26 @@
  * 特点：蓝色，有下划线
  */
 .more-detail-link {
+    color: #1976d2;                   /* 蓝色 */
+    text-decoration: underline;       /* 下划线 */
+}
+
+/**
+ * 邮箱链接样式
+ * 作用：显示可点击的邮箱链接
+ * 特点：蓝色，有下划线
+ */
+.email-link {
+    color: #1976d2;                   /* 蓝色 */
+    text-decoration: underline;       /* 下划线 */
+}
+
+/**
+ * 电话链接样式
+ * 作用：显示可点击的电话链接
+ * 特点：蓝色，有下划线
+ */
+.phone-link {
     color: #1976d2;                   /* 蓝色 */
     text-decoration: underline;       /* 下划线 */
 }
@@ -380,6 +411,16 @@
     border: 1px solid #ddd;           /* 边框 */
     border-radius: 4px;               /* 圆角 */
     cursor: pointer;                  /* 鼠标指针 */
+    transition: transform 0.2s ease;  /* 悬停动画 */
+}
+
+/**
+ * 参考附件图片悬停效果
+ * 作用：鼠标悬停时的放大效果
+ */
+.reference-image:hover {
+    transform: scale(1.05);           /* 放大效果 */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2); /* 悬停阴影 */
 }
 
 /* ========================================
@@ -393,4 +434,89 @@
  */
 .address-text {
     word-break: break-all;            /* 强制换行 */
+}
+
+/* ========================================
+ * 12. 响应式设计
+ * ======================================== */
+
+/**
+ * 小屏幕适配
+ * 作用：在小屏幕上调整布局
+ */
+@media (max-width: 480px) {
+    .search-area {
+        flex-direction: column;        /* 垂直排列 */
+        gap: 8px;                     /* 减小间距 */
+    }
+    
+    .info-label {
+        width: 100px;                 /* 减小标签宽度 */
+        font-size: 14px;              /* 减小字体 */
+    }
+    
+    .info-value {
+        font-size: 14px;              /* 减小字体 */
+    }
+    
+    .collapsible-title {
+        font-size: 16px;              /* 减小标题字体 */
+    }
+}
+
+/* ========================================
+ * 13. 动画效果
+ * ======================================== */
+
+/**
+ * 淡入动画
+ * 作用：为搜索结果添加淡入效果
+ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.search-results-container {
+    animation: fadeIn 0.3s ease-out;  /* 应用淡入动画 */
+}
+
+/**
+ * 展开动画
+ * 作用：为可折叠内容添加展开动画
+ */
+.collapsible-content {
+    animation: fadeIn 0.2s ease-out;  /* 应用淡入动画 */
+}
+
+/* ========================================
+ * 14. 滚动条样式
+ * ======================================== */
+
+/**
+ * 自定义滚动条
+ * 作用：美化滚动条样式
+ */
+.results-wrapper::-webkit-scrollbar {
+    width: 8px;                       /* 滚动条宽度 */
+}
+
+.results-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;              /* 轨道背景 */
+    border-radius: 4px;               /* 圆角 */
+}
+
+.results-wrapper::-webkit-scrollbar-thumb {
+    background: #c1c1c1;              /* 滑块背景 */
+    border-radius: 4px;               /* 圆角 */
+}
+
+.results-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;              /* 悬停背景 */
 } 

@@ -7,28 +7,28 @@
         <div v-if="expanded" class="collapsible-content">
             <div class="info-row">
                 <div class="info-label">产品编号:</div>
-                <div class="info-value product-no">{{ product.product_no }}</div>
+                <div class="info-value product-no">{{ product.product_no || '未提供' }}</div>
             </div>
             <div class="info-row">
                 <div class="info-label">产品名称:</div>
-                <div class="info-value">{{ product.product_name }}</div>
+                <div class="info-value">{{ product.product_name || '未提供' }}</div>
             </div>
             <div class="info-row">
                 <div class="info-label">产品状态:</div>
-                <div class="info-value product-status">{{ product.product_status_name }}</div>
+                <div class="info-value product-status">{{ product.product_status_name || '未提供' }}</div>
             </div>
             <div class="info-row">
                 <div class="info-label">产品进度:</div>
-                <div class="info-value product-progress">{{ product.child_status_name }}</div>
+                <div class="info-value product-progress">{{ product.child_status_name || '未提供' }}</div>
             </div>
             <div class="info-row">
                 <div class="info-label">产品类型:</div>
-                <div class="info-value">{{ product.product_type_name }}</div>
+                <div class="info-value">{{ product.product_type_name || '未提供' }}</div>
             </div>
             <div v-if="product.customize_info" class="info-row">
                 <div class="info-label">定制信息:</div>
                 <div class="info-value">
-                    <div v-for="(line, index) in product.customize_info.split('\n')" :key="index" class="customize-info-line">
+                    <div v-for="(line, index) in parseCustomizeInfo(product.customize_info)" :key="index" class="customize-info-line">
                         <span v-if="line.includes(':')" class="customize-info-key">{{ line.split(':')[0] }}:</span>
                         <span v-if="line.includes(':')" class="customize-info-value">{{ line.split(':')[1] }}</span>
                         <span v-else>{{ line }}</span>
@@ -37,7 +37,7 @@
             </div>
             <div class="info-row">
                 <div class="info-label">设计师:</div>
-                <div class="info-value">{{ product.editor_name }}</div>
+                <div class="info-value">{{ product.editor_name || '未提供' }}</div>
             </div>
             <div class="info-row">
                 <div class="info-label">创建时间:</div>
@@ -46,7 +46,9 @@
             <div v-if="product.more_detail && product.more_detail.url" class="info-row">
                 <div class="info-label">更多详情:</div>
                 <div class="info-value">
-                    <a :href="product.more_detail.url" target="_blank" class="more-detail-link">{{ product.more_detail.url }}</a>
+                    <a :href="product.more_detail.url" target="_blank" class="more-detail-link" @click="openExternalLink(product.more_detail.url)">
+                        {{ product.more_detail.url }}
+                    </a>
                 </div>
             </div>
             <div v-if="product.attachments && product.attachments.length > 0 && product.attachments[0].url" class="info-row">
@@ -60,7 +62,8 @@
 </template>
 
 <script>
-import { formatDate } from '../utils/formatters';
+import { formatDate, parseCustomizeInfo } from '../utils/formatters';
+import { openExternalUrl } from '../utils/uxpUtils';
 
 export default {
     name: 'ProductInfo',
@@ -75,7 +78,11 @@ export default {
         }
     },
     methods: {
-        formatDate
+        formatDate,
+        parseCustomizeInfo,
+        openExternalLink(url) {
+            openExternalUrl(url);
+        }
     }
 };
 </script> 

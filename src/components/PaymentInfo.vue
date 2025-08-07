@@ -31,7 +31,11 @@
             </div>
             <div class="info-row">
                 <div class="info-label">支付状态:</div>
-                <div class="info-value">{{ product.pay_status_name }}</div>
+                <div class="info-value">{{ product.pay_status_name || '未提供' }}</div>
+            </div>
+            <div class="info-row">
+                <div class="info-label">剩余金额:</div>
+                <div class="info-value remaining-amount">${{ formatCurrency(remainingAmount) }}</div>
             </div>
         </div>
     </div>
@@ -50,6 +54,13 @@ export default {
         expanded: {
             type: Boolean,
             default: false
+        }
+    },
+    computed: {
+        remainingAmount() {
+            const totalPrice = parseFloat(this.product.total_price) || 0;
+            const totalPaid = parseFloat(this.product.total_pay) || 0;
+            return Math.max(0, totalPrice - totalPaid);
         }
     },
     methods: {
