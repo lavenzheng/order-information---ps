@@ -51,10 +51,32 @@
                     </a>
                 </div>
             </div>
-            <div v-if="product.attachments && product.attachments.length > 0 && product.attachments[0].url" class="info-row">
+            <div v-if="product.attachments && product.attachments.length > 0" class="info-row">
                 <div class="info-label">参考附件:</div>
                 <div class="info-value">
-                    <img :src="product.attachments[0].url" alt="参考附件" class="reference-image" @click="$emit('openImage', product.attachments[0].url)" />
+                    <!-- 调试信息 -->
+                    <div style="color: red; font-size: 12px; margin-bottom: 5px;">
+                        调试: 附件数量 {{ product.attachments.length }}, 图片数量 {{ imageAttachments.length }}
+                    </div>
+                    
+                    <div class="attachments-container">
+                        <img 
+                            v-for="(attachment, index) in imageAttachments" 
+                            :key="index"
+                            :src="attachment.url" 
+                            :alt="`参考附件 ${index + 1}`" 
+                            class="reference-image" 
+                            @click="$emit('openImage', attachment.url)"
+                            @error="handleImageError"
+                            @load="handleImageLoad"
+                        />
+                    </div>
+                    <div v-if="imageAttachments.length > 0" class="attachments-info">
+                        共 {{ imageAttachments.length }} 张图片，点击查看大图
+                    </div>
+                    <div v-else class="attachments-info" style="color: orange;">
+                        没有找到有效的图片附件
+                    </div>
                 </div>
             </div>
         </div>
@@ -77,11 +99,41 @@ export default {
             default: false
         }
     },
+    computed: {
+        // 过滤出图片类型的附件
+        imageAttachments() {
+            if (!this.product.attachments || !Array.isArray(this.product.attachments)) {
+                console.log('没有附件或附件不是数组');
+                return [];
+            }
+            
+            console.log('原始附件数据:', this.product.attachments);
+            
+            const filtered = this.product.attachments.filter(attachment => {
+                // 简化过滤逻辑：只要有URL就认为是图片
+                const isValid = attachment && attachment.url;
+                console.log('检查附件:', attachment, '是否有效:', isValid);
+                return isValid;
+            });
+            
+            console.log('过滤后的图片附件:', filtered);
+            return filtered;
+        }
+    },
     methods: {
         formatDate,
         parseCustomizeInfo,
         openExternalLink(url) {
             openExternalUrl(url);
+        },
+        handleImageError(event) {
+            // 图片加载失败时的处理
+            console.warn('图片加载失败:', event.target.src);
+            event.target.style.display = 'none';
+        },
+        handleImageLoad(event) {
+            // 图片加载成功时的处理
+            console.log('图片加载成功:', event.target.src);
         }
     }
 };
