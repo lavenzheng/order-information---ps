@@ -35,7 +35,7 @@
                         :product="product" 
                         :expanded="productInfoExpanded"
                         @toggle="toggleProductInfo"
-                        @openImage="openImage" />
+                        @openImage="openImageWithIndex" />
                     
                     <!-- 支付信息 -->
                     <PaymentInfo 
@@ -48,6 +48,61 @@
                         :product="product" 
                         :expanded="customerInfoExpanded"
                         @toggle="toggleCustomerInfo" />
+                </div>
+            </div>
+        </div>
+        
+        <!-- 图片预览模态框 -->
+        <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
+            <div class="image-preview-container" @click.stop>
+                <!-- 关闭按钮 -->
+                <button class="close-button" @click="closeImagePreview">&times;</button>
+                
+                <!-- 上一张按钮 -->
+                <button 
+                    v-if="currentImageList.length > 1" 
+                    class="nav-button prev-button" 
+                    @click="prevImage"
+                    :disabled="currentImageIndex === 0"
+                >
+                    ‹
+                </button>
+                
+                <!-- 下一张按钮 -->
+                <button 
+                    v-if="currentImageList.length > 1" 
+                    class="nav-button next-button" 
+                    @click="nextImage"
+                    :disabled="currentImageIndex === currentImageList.length - 1"
+                >
+                    ›
+                </button>
+                
+                <!-- 图片显示 -->
+                <div class="image-display">
+                    <img 
+                        :src="currentImageUrl" 
+                        :alt="`图片 ${currentImageIndex + 1}`"
+                        class="preview-image"
+                        @error="handlePreviewImageError"
+                        @load="handlePreviewImageLoad"
+                    />
+                </div>
+                
+                <!-- 图片信息区域 -->
+                <div class="image-info">
+                    <!-- 左侧：图片尺寸信息 -->
+                    <div class="image-size-info" v-if="currentImageSize">
+                        {{ currentImageSize }}
+                    </div>
+                    
+                    <!-- 中间：图片计数器 -->
+                    <span class="image-counter">{{ currentImageIndex + 1 }} / {{ currentImageList.length }}</span>
+                    
+                    <!-- 右侧：用浏览器打开按钮 -->
+                    <button class="browser-open-btn" @click="openCurrentImageInBrowser">
+                        用浏览器打开
+                    </button>
                 </div>
             </div>
         </div>
@@ -77,8 +132,29 @@ export default {
             errorMessage: '',
             productInfoExpanded: config.ui.defaultExpanded.productInfo,
             customerInfoExpanded: config.ui.defaultExpanded.customerInfo,
-            paymentInfoExpanded: config.ui.defaultExpanded.paymentInfo
+            paymentInfoExpanded: config.ui.defaultExpanded.paymentInfo,
+            // 图片预览相关
+            showImagePreview: false,
+            currentImageList: [],
+            currentImageIndex: 0,
+            currentImageSize: null
         };
+    },
+    computed: {
+        currentImageUrl() {
+            if (this.currentImageList.length === 0 || this.currentImageIndex >= this.currentImageList.length) {
+                return '';
+            }
+            return this.currentImageList[this.currentImageIndex];
+        }
+    },
+    mounted() {
+        // 添加键盘事件监听
+        document.addEventListener('keydown', this.handleKeydown);
+    },
+    beforeDestroy() {
+        // 移除键盘事件监听
+        document.removeEventListener('keydown', this.handleKeydown);
     },
     methods: {
         handleInput(event) {
@@ -128,10 +204,53 @@ export default {
             this.paymentInfoExpanded = !this.paymentInfoExpanded;
         },
         
+        // 新的图片预览方法
+        openImageWithIndex(imageData) {
+            if (!imageData) return;
+            
+            // 处理不同的参数格式
+            let imageUrl, imageList, imageIndex;
+            
+            if (typeof imageData === 'string') {
+                // 兼容原来的字符串格式 - 使用原来的单张图片打开方式
+                this.openImage(imageData);
+                return;
+            } else if (imageData.url) {
+                // 新的对象格式
+                imageUrl = imageData.url;
+                imageIndex = imageData.index || 0;
+                
+                // 从当前产品中获取图片列表
+                const currentProduct = this.searchResult && this.searchResult[0];
+                if (currentProduct && currentProduct.attachments) {
+                    imageList = currentProduct.attachments
+                        .filter(attachment => attachment && attachment.url)
+                        .map(attachment => attachment.url);
+                } else {
+                    imageList = [imageUrl];
+                }
+            } else {
+                return;
+            }
+            
+            // 所有图片都使用预览模态框
+            this.currentImageList = imageList;
+            this.currentImageIndex = imageIndex;
+            this.showImagePreview = true;
+            // 获取当前图片尺寸
+            this.$nextTick(() => {
+                this.getCurrentImageSize();
+            });
+        },
+        
+        // 原来的单张图片打开方法
         openImage(imageUrl) {
             if (!imageUrl) return;
             
             try {
+                // 显示图片信息（尺寸、URL等）
+                this.showImageInfo(imageUrl);
+                
                 // 使用新的图片面板功能
                 if (window.showImagePanel) {
                     window.showImagePanel(imageUrl);
@@ -143,6 +262,107 @@ export default {
                 console.error('打开图片失败:', error);
                 // 备用方案：在浏览器中打开
                 openExternalUrl(imageUrl);
+            }
+        },
+        
+        // 显示图片信息
+        showImageInfo(imageUrl) {
+            const img = new Image();
+            img.onload = () => {
+                const info = `图片信息:\n尺寸: ${img.width} × ${img.height}\nURL: ${imageUrl}`;
+                console.log(info);
+                
+                // 如果有通知功能，显示图片信息
+                if (window.showNotification) {
+                    window.showNotification(info, 'info', 5000);
+                }
+            };
+            img.onerror = () => {
+                console.log(`图片URL: ${imageUrl}`);
+            };
+            img.src = imageUrl;
+        },
+        
+        // 关闭图片预览
+        closeImagePreview() {
+            this.showImagePreview = false;
+            this.currentImageList = [];
+            this.currentImageIndex = 0;
+        },
+        
+        // 上一张图片
+        prevImage() {
+            if (this.currentImageIndex > 0) {
+                this.currentImageIndex--;
+                // 显示当前图片信息
+                this.showImageInfo(this.currentImageUrl);
+                // 获取当前图片尺寸
+                this.getCurrentImageSize();
+            }
+        },
+        
+        // 下一张图片
+        nextImage() {
+            if (this.currentImageIndex < this.currentImageList.length - 1) {
+                this.currentImageIndex++;
+                // 显示当前图片信息
+                this.showImageInfo(this.currentImageUrl);
+                // 获取当前图片尺寸
+                this.getCurrentImageSize();
+            }
+        },
+        
+        // 在浏览器中打开当前图片
+        openCurrentImageInBrowser() {
+            if (this.currentImageUrl) {
+                openExternalUrl(this.currentImageUrl);
+            }
+        },
+        
+        // 获取当前图片尺寸
+        getCurrentImageSize() {
+            if (!this.currentImageUrl) {
+                this.currentImageSize = null;
+                return;
+            }
+            
+            console.log('开始获取图片尺寸:', this.currentImageUrl);
+            
+            // 参考之前单张图片的尺寸获取逻辑
+            const img = new Image();
+            img.onload = () => {
+                console.log('图片尺寸获取成功:', img.width, '×', img.height);
+                this.currentImageSize = `${img.width} × ${img.height}`;
+                console.log('设置currentImageSize:', this.currentImageSize);
+            };
+            img.onerror = () => {
+                console.warn('图片尺寸获取失败:', this.currentImageUrl);
+                this.currentImageSize = '尺寸获取失败';
+            };
+            img.src = this.currentImageUrl;
+        },
+        
+        // 处理预览图片加载错误
+        handlePreviewImageError(event) {
+            console.warn('预览图片加载失败:', event.target.src);
+            // 可以在这里显示一个占位图片
+        },
+
+        // 处理预览图片加载成功
+        handlePreviewImageLoad(event) {
+            console.log('预览图片加载成功:', event.target.src);
+            // 图片加载成功后，获取尺寸
+            this.getCurrentImageSize();
+        },
+
+        // 处理键盘事件
+        handleKeydown(event) {
+            if (this.showImagePreview) {
+                if (event.key === 'ArrowLeft') {
+                    this.prevImage();
+                } else if (event.key === 'ArrowRight') {
+                    this.nextImage();
+                }
             }
         }
     }

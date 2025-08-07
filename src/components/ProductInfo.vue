@@ -54,23 +54,36 @@
             <div v-if="product.attachments && product.attachments.length > 0" class="info-row">
                 <div class="info-label">参考附件:</div>
                 <div class="info-value">
-                    <!-- 调试信息 -->
-                    <div style="color: red; font-size: 12px; margin-bottom: 5px;">
-                        调试: 附件数量 {{ product.attachments.length }}, 图片数量 {{ imageAttachments.length }}
+                    <!-- 单张图片显示 -->
+                    <div v-if="imageAttachments.length === 1" class="single-image-container">
+                        <img 
+                            :src="imageAttachments[0].url" 
+                            :alt="`参考附件`" 
+                            class="reference-image" 
+                            @click="openImageWithIndex(imageAttachments[0].url, 0)"
+                            @error="handleImageError"
+                            @load="handleImageLoad"
+                        />
                     </div>
                     
-                    <div class="attachments-container">
+                    <!-- 多张图片显示 -->
+                    <div v-else-if="imageAttachments.length > 1" class="attachments-container">
                         <img 
                             v-for="(attachment, index) in imageAttachments" 
                             :key="index"
                             :src="attachment.url" 
                             :alt="`参考附件 ${index + 1}`" 
                             class="reference-image" 
-                            @click="$emit('openImage', attachment.url)"
+                            @click="openImageWithIndex(attachment.url, index)"
                             @error="handleImageError"
                             @load="handleImageLoad"
                         />
                     </div>
+                    
+                    <!-- 多张图片的操作按钮 -->
+                    <div v-if="imageAttachments.length > 1" class="multi-image-actions">
+                    </div>
+                    
                     <div v-if="imageAttachments.length > 0" class="attachments-info">
                         共 {{ imageAttachments.length }} 张图片，点击查看大图
                     </div>
@@ -99,6 +112,10 @@ export default {
             default: false
         }
     },
+    data() {
+        return {
+        };
+    },
     computed: {
         // 过滤出图片类型的附件
         imageAttachments() {
@@ -120,6 +137,9 @@ export default {
             return filtered;
         }
     },
+    mounted() {
+        // 不再需要获取图片尺寸，因为现在使用预览模式
+    },
     methods: {
         formatDate,
         parseCustomizeInfo,
@@ -134,7 +154,29 @@ export default {
         handleImageLoad(event) {
             // 图片加载成功时的处理
             console.log('图片加载成功:', event.target.src);
-        }
+            // 获取图片尺寸（只获取第一张图片的尺寸作为参考）
+            if (this.imageAttachments.length > 0 && event.target.src === this.imageAttachments[0].url) {
+                // this.getImageSize(event.target.src); // 移除此行
+            }
+        },
+        openImageWithIndex(url, index) {
+            // 所有图片都使用预览模式
+            this.$emit('openImage', { url, index });
+        },
+        openInBrowser(url) {
+            // 在浏览器中打开图片
+            openExternalUrl(url);
+        },
+        // getImageSize(url) { // 移除此方法
+        //     const img = new Image();
+        //     img.onload = () => {
+        //         this.imageSize = `${img.width} × ${img.height}`;
+        //     };
+        //     img.onerror = () => {
+        //         this.imageSize = '尺寸获取失败';
+        //     };
+        //     img.src = url;
+        // }
     }
 };
 </script> 
