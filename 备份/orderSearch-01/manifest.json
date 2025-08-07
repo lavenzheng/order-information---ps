@@ -24,7 +24,6 @@
       "maximumSize": { "width": 2000, "height": 2000 },
       "preferredDockedSize": { "width": 230, "height": 300 },
       "preferredFloatingSize": { "width": 230, "height": 300 },
-      "startOnHostStart": true,
       "icons": [
         {
           "width": 23,
@@ -54,10 +53,5 @@
       "theme": ["darkest", "dark", "medium", "lightest", "light", "all"],
       "species": ["pluginList"]
     }
-  ],
-  "requiredPermissions": {
-    "launchProcess": {
-      "schemes": ["file"]
-    }
-  }
+  ]
 }

@@ -137,7 +137,10 @@ export default {
             showImagePreview: false,
             currentImageList: [],
             currentImageIndex: 0,
-            currentImageSize: null
+            currentImageSize: null,
+            // 自动搜索相关
+            lastSearchedKeyword: '',
+            urlCheckInterval: null
         };
     },
     computed: {
@@ -151,12 +154,174 @@ export default {
     mounted() {
         // 添加键盘事件监听
         document.addEventListener('keydown', this.handleKeydown);
+        
+        // 初始检查参数
+        this.autoSearchFromParams();
+        
+        // 设置持续监听参数变化
+        this.startParameterListener();
     },
+    
     beforeDestroy() {
         // 移除键盘事件监听
         document.removeEventListener('keydown', this.handleKeydown);
+        
+        // 清理参数监听器
+        this.stopParameterListener();
     },
+    
     methods: {
+        // 启动参数监听器
+        startParameterListener() {
+            // 方法1: 定期检查URL变化
+            this.urlCheckInterval = setInterval(() => {
+                this.checkForNewParameters();
+            }, 1000); // 每秒检查一次
+            
+            // 方法2: 监听hashchange事件
+            window.addEventListener('hashchange', this.handleHashChange);
+            
+            // 方法3: 监听popstate事件
+            window.addEventListener('popstate', this.handlePopState);
+            
+            // 方法4: 监听storage事件（跨标签页通信）
+            window.addEventListener('storage', this.handleStorageChange);
+            
+            console.log('参数监听器已启动');
+        },
+        
+        // 停止参数监听器
+        stopParameterListener() {
+            if (this.urlCheckInterval) {
+                clearInterval(this.urlCheckInterval);
+                this.urlCheckInterval = null;
+            }
+            
+            window.removeEventListener('hashchange', this.handleHashChange);
+            window.removeEventListener('popstate', this.handlePopState);
+            window.removeEventListener('storage', this.handleStorageChange);
+            
+            console.log('参数监听器已停止');
+        },
+        
+        // 处理hash变化
+        handleHashChange() {
+            console.log('检测到hash变化');
+            this.checkForNewParameters();
+        },
+        
+        // 处理popstate事件
+        handlePopState() {
+            console.log('检测到popstate事件');
+            this.checkForNewParameters();
+        },
+        
+        // 处理storage变化
+        handleStorageChange(event) {
+            if (event.key === 'pluginSearchParam') {
+                console.log('检测到storage变化:', event.newValue);
+                this.handleNewParameter(event.newValue);
+            }
+        },
+        
+        // 检查新参数
+        checkForNewParameters() {
+            try {
+                // 检查URL参数
+                const urlParams = new URLSearchParams(window.location.search);
+                const searchParam = urlParams.get('search') || urlParams.get('q') || urlParams.get('product');
+                
+                // 检查hash参数
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const hashSearchParam = hashParams.get('search') || hashParams.get('q') || hashParams.get('product');
+                
+                // 检查localStorage中的新参数
+                const newSearchParam = localStorage.getItem('pluginSearchParam');
+                const newSearchTimestamp = localStorage.getItem('pluginSearchTimestamp');
+                
+                // 获取当前时间戳
+                const currentTimestamp = Date.now();
+                
+                // 优先级: URL参数 > Hash参数 > localStorage新参数
+                let searchKeyword = searchParam || hashSearchParam || newSearchParam;
+                
+                if (searchKeyword && searchKeyword.trim()) {
+                    // 检查localStorage中的时间戳
+                    if (newSearchTimestamp) {
+                        const timestampDiff = currentTimestamp - parseInt(newSearchTimestamp);
+                        // 如果时间戳是新的（5秒内），强制使用新参数
+                        if (timestampDiff < 5000) {
+                            console.log('检测到时间戳新参数:', searchKeyword, '时间差:', timestampDiff + 'ms');
+                            this.handleNewParameter(searchKeyword);
+                            return;
+                        }
+                    }
+                    
+                    // 检查是否是新参数
+                    if (searchKeyword !== this.lastSearchedKeyword) {
+                        console.log('检测到新参数:', searchKeyword);
+                        this.handleNewParameter(searchKeyword);
+                    } else {
+                        // 如果是相同参数，但localStorage中有新参数，也处理
+                        if (newSearchParam && newSearchParam.trim() && newSearchParam !== this.lastSearchedKeyword) {
+                            console.log('检测到localStorage中的新参数:', newSearchParam);
+                            this.handleNewParameter(newSearchParam);
+                        }
+                    }
+                }
+                
+                // 检查是否有强制更新标记
+                const forceUpdate = localStorage.getItem('pluginForceUpdate');
+                if (forceUpdate === 'true') {
+                    console.log('检测到强制更新标记');
+                    localStorage.removeItem('pluginForceUpdate');
+                    // 强制清除上次搜索记录
+                    this.clearLastSearch();
+                    if (searchKeyword && searchKeyword.trim()) {
+                        console.log('强制更新参数:', searchKeyword);
+                        this.handleNewParameter(searchKeyword);
+                    }
+                }
+                
+                // 检查是否有强制清除标记
+                const forceClear = localStorage.getItem('pluginForceClear');
+                if (forceClear === 'true') {
+                    console.log('检测到强制清除标记');
+                    localStorage.removeItem('pluginForceClear');
+                    this.clearLastSearch();
+                    // 重新检查参数
+                    setTimeout(() => {
+                        this.checkForNewParameters();
+                    }, 100);
+                }
+            } catch (error) {
+                console.error('检查新参数失败:', error);
+            }
+        },
+        
+        // 处理新参数
+        handleNewParameter(searchKeyword) {
+            if (!searchKeyword || !searchKeyword.trim()) return;
+            
+            console.log('处理新参数:', searchKeyword);
+            this.lastSearchedKeyword = searchKeyword;
+            this.inputText = searchKeyword.trim();
+            
+            // 保存到localStorage
+            this.saveSearchKeyword(searchKeyword);
+            
+            // 清除临时参数
+            localStorage.removeItem('pluginSearchParam');
+            localStorage.removeItem('pluginSearchTimestamp');
+            
+            // 延迟搜索
+            this.$nextTick(() => {
+                setTimeout(() => {
+                    this.searchProduct();
+                }, 500);
+            });
+        },
+        
         handleInput(event) {
             this.inputText = event.target.value;
         },
@@ -167,11 +332,15 @@ export default {
             this.errorMessage = '';
         },
         
+        // 搜索产品
         async searchProduct() {
             if (!this.inputText.trim()) {
                 this.errorMessage = '请输入产品编号';
                 return;
             }
+            
+            // 保存搜索关键词
+            this.saveSearchKeyword(this.inputText);
             
             this.isLoading = true;
             this.errorMessage = '';
@@ -179,14 +348,17 @@ export default {
             
             try {
                 const result = await searchProductByNo(this.inputText.trim());
-                this.searchResult = result;
                 
-                if (this.searchResult.length === 0) {
-                    this.errorMessage = '未找到匹配的产品编号';
+                if (result && result.length > 0) {
+                    this.searchResult = result;
+                    console.log('搜索成功:', result);
+                } else {
+                    this.errorMessage = '未找到匹配的产品';
+                    console.log('未找到产品');
                 }
             } catch (error) {
                 console.error('搜索失败:', error);
-                this.errorMessage = error.message || '搜索失败，请重试';
+                this.errorMessage = '搜索失败，请重试';
             } finally {
                 this.isLoading = false;
             }
@@ -364,6 +536,57 @@ export default {
                     this.nextImage();
                 }
             }
+        },
+
+        // 自动从参数中获取搜索关键词并搜索（初始检查）
+        autoSearchFromParams() {
+            try {
+                // 方法1: 从URL参数获取
+                const urlParams = new URLSearchParams(window.location.search);
+                const searchParam = urlParams.get('search') || urlParams.get('q') || urlParams.get('product');
+                
+                // 方法2: 从hash参数获取
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                const hashSearchParam = hashParams.get('search') || hashParams.get('q') || hashParams.get('product');
+                
+                // 方法3: 从localStorage获取（如果之前保存过）
+                const savedSearch = localStorage.getItem('autoSearchProduct');
+                
+                // 优先级: URL参数 > Hash参数 > localStorage
+                const searchKeyword = searchParam || hashSearchParam || savedSearch;
+                
+                if (searchKeyword && searchKeyword.trim()) {
+                    console.log('初始检查到搜索关键词:', searchKeyword);
+                    this.lastSearchedKeyword = searchKeyword;
+                    this.inputText = searchKeyword.trim();
+                    
+                    // 延迟一点时间确保组件完全加载后再搜索
+                    this.$nextTick(() => {
+                        setTimeout(() => {
+                            this.searchProduct();
+                        }, 500);
+                    });
+                }
+            } catch (error) {
+                console.error('初始参数检查失败:', error);
+            }
+        },
+        
+        // 保存搜索关键词到localStorage（供下次自动搜索使用）
+        saveSearchKeyword(keyword) {
+            if (keyword && keyword.trim()) {
+                localStorage.setItem('autoSearchProduct', keyword.trim());
+                // 同时保存时间戳
+                localStorage.setItem('pluginSearchTimestamp', Date.now().toString());
+            }
+        },
+        
+        // 清除上次搜索记录（强制接收新参数）
+        clearLastSearch() {
+            this.lastSearchedKeyword = '';
+            localStorage.removeItem('autoSearchProduct');
+            localStorage.removeItem('pluginSearchTimestamp');
+            console.log('已清除上次搜索记录');
         }
     }
 };

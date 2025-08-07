@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>图片查看器</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .image-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 20px;
+            width: 100%;
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow: auto;
+            box-sizing: border-box;
+        }
+        
+        .image-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .image-wrapper {
+            text-align: center;
+            margin-bottom: 15px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .reference-image {
+            max-width: 100%;
+            max-height: 60vh;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            object-fit: contain;
+            transition: opacity 0.3s ease;
+        }
+        
+        .loading {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .error-message {
+            color: #c62828;
+            font-size: 14px;
+            text-align: center;
+            padding: 20px;
+            background-color: #ffebee;
+            border-radius: 4px;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .close-button {
+            padding: 10px 20px;
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .close-button:hover {
+            background-color: #1565c0;
+        }
+        
+        .url-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="image-container">
+        <div class="image-title">参考附件图片</div>
+        <div class="image-wrapper" id="imageWrapper">
+            <div class="loading">正在加载图片...</div>
+        </div>
+        <div class="button-container">
+            <button class="close-button" onclick="window.close()">关闭窗口</button>
+        </div>
+        <div class="url-info" id="urlInfo" style="display: none;">
+            图片URL: <span id="imageUrl"></span>
+        </div>
+    </div>
+
+    <script>
+        // 获取URL参数中的图片地址
+        const urlParams = new URLSearchParams(window.location.search);
+        const imageUrl = urlParams.get('url');
+        
+        if (imageUrl) {
+            document.getElementById('imageUrl').textContent = imageUrl;
+            
+            // 创建图片元素
+            const img = document.createElement('img');
+            img.className = 'reference-image';
+            img.alt = '参考附件';
+            
+            // 图片加载成功
+            img.onload = function() {
+                document.getElementById('imageWrapper').innerHTML = '';
+                document.getElementById('imageWrapper').appendChild(img);
+            };
+            
+            // 图片加载失败
+            img.onerror = function() {
+                document.getElementById('imageWrapper').innerHTML = '<div class="error-message">图片加载失败，请检查网络连接</div>';
+                document.getElementById('urlInfo').style.display = 'block';
+            };
+            
+            // 设置图片源
+            img.src = imageUrl;
+            
+        } else {
+            document.getElementById('imageWrapper').innerHTML = '<div class="error-message">未提供图片URL</div>';
+        }
+    </script>
+</body>
+</html> 

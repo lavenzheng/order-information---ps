@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <script src="./main.js"></script>
+    <style>
+      div {
+        margin: auto;
+      }
+      
+      /* 图片查看对话框样式 */
+      #imgDialog {
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        padding: 10px;
+        background: white;
+        min-width: 400px;
+        min-height: 300px;
+        max-width: 90vw;
+        max-height: 90vh;
+        width: 600px;
+        height: 500px;
+        overflow: auto;
+        position: relative;
+      }
+      
+      #imgDialog::backdrop {
+        background-color: rgba(0,0,0,0.5);
+      }
+      
+      /* 自定义拖拽手柄 */
+      #resizeHandle {
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        right: 4px;
+        bottom: 4px;
+        cursor: se-resize;
+        background: linear-gradient(45deg, transparent 30%, #ccc 30%, #ccc 50%, transparent 50%);
+        border-radius: 2px;
+        z-index: 1000;
+      }
+      
+      #resizeHandle:hover {
+        background: linear-gradient(45deg, transparent 30%, #999 30%, #999 50%, transparent 50%);
+      }
+      
+      .close-button {
+        padding: 8px 16px;
+        background-color: #1976d2;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        font-family: inherit;
+      }
+      
+      .close-button:hover {
+        background-color: #1565c0;
+      }
+      
+      .loading-text {
+        color: #666;
+        font-size: 14px;
+        text-align: center;
+        padding: 20px;
+      }
+      
+      .error-text {
+        color: #c62828;
+        font-size: 14px;
+        padding: 20px;
+        background-color: #ffebee;
+        border-radius: 4px;
+        text-align: center;
+      }
+      
+      #photo {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin-bottom: 10px;
+        border-radius: 4px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.1s ease;
+        cursor: zoom-in;
+      }
+      
+      /* 缩放控制样式 */
+      .zoom-controls {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0,0,0,0.8);
+        border-radius: 4px;
+        padding: 8px;
+        display: flex;
+        gap: 8px;
+        z-index: 10001;
+      }
+      
+      .zoom-btn {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: none;
+        border-radius: 3px;
+        padding: 4px 8px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: background 0.2s;
+      }
+      
+      .zoom-btn:hover {
+        background: rgba(255,255,255,0.3);
+      }
+      
+      .zoom-info {
+        color: white;
+        font-size: 12px;
+        padding: 4px 8px;
+        background: rgba(0,0,0,0.5);
+        border-radius: 3px;
+      }
+      
+      /* 确保图片查看面板不会产生滚动条 */
+      #imageViewerPanel {
+        overflow: hidden !important;
+        z-index: 2147483647 !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0,0,0,0.9) !important;
+        isolation: isolate !important;
+      }
+      
+      /* 确保面板在所有Spectrum组件之上 */
+      #imageViewerPanel,
+      #imageViewerPanel * {
+        z-index: 2147483647 !important;
+      }
+      
+      /* 覆盖Spectrum组件的z-index */
+      sp-textfield,
+      sp-button,
+      sp-body {
+        z-index: auto !important;
+      }
+      
+      /* 强制覆盖所有可能的层级 */
+      #imageViewerPanel {
+        z-index: 2147483647 !important;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0,0,0,0.9) !important;
+        isolation: isolate !important;
+        pointer-events: auto !important;
+      }
+      
+      /* 确保面板内容也在最高层级 */
+      #imageViewerPanel > * {
+        z-index: 2147483647 !important;
+        position: relative !important;
+      }
+      
+      /* 确保图片容器正确显示 */
+      #imageContainer {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+      }
+      
+      /* 确保图片正确显示 */
+      #panelPhoto {
+        max-width: 90% !important;
+        max-height: 90% !important;
+        object-fit: contain !important;
+        transform-origin: center center !important;
+      }
+      
+      /* 确保按钮大小正常 */
+      #openInBrowserBtn,
+      #closePanelBtn {
+        padding: 6px 12px !important;
+        font-size: 12px !important;
+        min-width: auto !important;
+        max-width: none !important;
+        width: auto !important;
+        height: auto !important;
+        position: absolute !important;
+        bottom: 8px !important;
+        border: none !important;
+        border-radius: 4px !important;
+        cursor: pointer !important;
+        font-family: inherit !important;
+        background-color: #1976d2 !important;
+        color: white !important;
+      }
+      
+      #openInBrowserBtn {
+        right: 120px !important;
+        background-color: #4CAF50 !important;
+      }
+      
+      #closePanelBtn {
+        right: 8px !important;
+        background-color: #1976d2 !important;
+      }
+      
+      /* 确保图片尺寸信息显示在最高层级 */
+      #zoomInfo {
+        position: absolute !important;
+        bottom: 8px !important;
+        left: 8px !important;
+        color: #fff !important;
+        background: rgba(0,0,0,0.5) !important;
+        padding: 2px 6px !important;
+        border-radius: 4px !important;
+        font-size: 12px !important;
+        z-index: 2147483648 !important;
+        pointer-events: none !important;
+      }
+      
+      /* 确保遮罩层完全覆盖滚动条 */
+      #imageViewerOverlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0,0,0,0.95) !important;
+        z-index: 2147483646 !important;
+        pointer-events: auto !important;
+        overflow: hidden !important;
+      }
+      
+      /* 阻断滚动冒泡到外部 */
+      #imageViewerPanel, #imageContainer {
+        overscroll-behavior: contain;
+        overscroll-behavior-y: contain;
+        overflow: hidden;
+      }
+      
+      /* 确保插件根元素也不会传递滚动 */
+      html, body {
+        overscroll-behavior: none;
+      }
+      
+      /* 隐藏滚动条 */
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar {
+        display: none !important;
+      }
+      
+      html {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+      }
+      
+      body {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+      }
+      
+      /* 对话框禁用滚动 */
+      #imgDialog {
+        overflow: hidden !important;
+      }
+      
+      /* 对话框图片样式 */
+      #photo {
+        transform-origin: center center;
+        transition: transform 0.1s;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      
+      /* 禁用图片拖拽 */
+      #panelPhoto {
+        pointer-events: auto;
+        -webkit-user-drag: none;
+        -khtml-user-drag: none;
+        -moz-user-drag: none;
+        -o-user-drag: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div>
+      <div id="container"></div>
+    </div>
+    
+    <!-- 图片查看对话框 -->
+    <dialog id="imgDialog" onwheel="handleZoomDialog(event)" onmousewheel="handleZoomDialog(event)">
+      <img id="photo" alt="加载中…" onwheel="handleZoomDialog(event)" onmousewheel="handleZoomDialog(event)" />
+      <div id="resizeHandle"></div>
+      <footer style="text-align: right; margin-top: 10px;">
+        <button class="close-button" id="closeDialogBtn">关闭</button>
+      </footer>
+    </dialog>
+    
+    <!-- 图片查看面板容器 -->
+    <div id="imageViewerPanel" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); overflow: hidden; z-index: 2147483647; isolation: isolate;" onwheel="handleZoom(event)" onmousewheel="handleZoom(event)">
+      <div id="imageContainer" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; touch-action: none; overscroll-behavior: contain;" tabindex="0" onwheel="handleZoom(event)" onmousewheel="handleZoom(event)">
+        <img id="panelPhoto" src="" alt="加载中…" style="transform-origin: center center; transition: transform 0.1s; max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 4px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); user-select: none;" onwheel="handleZoom(event)" onmousewheel="handleZoom(event)" />
+      </div>
+      <div id="zoomInfo" style="position: absolute; bottom: 8px; left: 8px; color: #fff; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 4px; font-size: 12px; z-index: 2147483648;">图片尺寸</div>
+      <button id="openInBrowserBtn" style="position: absolute; bottom: 8px; right: 120px; padding: 6px 12px; background-color: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: inherit; min-width: auto; max-width: none;">用浏览器打开</button>
+      <button id="closePanelBtn" style="position: absolute; bottom: 8px; right: 8px; padding: 6px 12px; background-color: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-family: inherit; min-width: auto; max-width: none;">× 关闭</button>
+    </div>
+    
+    <!-- 额外的遮罩层，确保覆盖所有元素 -->
+    <div id="imageViewerOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 2147483646; pointer-events: auto;"></div>
+    
+    <!-- 专门用于遮挡滚动条的遮罩层 -->
+    <div id="scrollbarOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.95); z-index: 2147483645; pointer-events: none;"></div>
+
+    <script>
+      // 图片查看对话框功能
+      const imgDialog = document.getElementById('imgDialog');
+      const photo = document.getElementById('photo');
+      const closeDialogBtn = document.getElementById('closeDialogBtn');
+      const resizeHandle = document.getElementById('resizeHandle');
+      
+      // 图片查看面板功能
+      const imageViewerPanel = document.getElementById('imageViewerPanel');
+      const imageContainer = document.getElementById('imageContainer');
+      const panelPhoto = document.getElementById('panelPhoto');
+      const zoomInfo = document.getElementById('zoomInfo');
+      const closePanelBtn = document.getElementById('closePanelBtn');
+      const openInBrowserBtn = document.getElementById('openInBrowserBtn');
+      const imageViewerOverlay = document.getElementById('imageViewerOverlay');
+      const scrollbarOverlay = document.getElementById('scrollbarOverlay');
+      
+      // 存储当前图片URL
+      let currentImageUrl = '';
+      
+      // 缩放状态
+      let currentZoom = 1;
+      let imgDialogZoom = 1; // 对话框的缩放状态
+      let minZoom = 0.1;
+      let maxZoom = 5.0;
+      let zoomStep = 0.1;
+      
+      // 关闭对话框
+      closeDialogBtn.addEventListener('click', () => {
+        imgDialog.close();
+        // 恢复背景滚动
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+      });
+      
+      // 点击对话框外部关闭
+      imgDialog.addEventListener('click', (event) => {
+        if (event.target === imgDialog) {
+          imgDialog.close();
+          // 恢复背景滚动
+          document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
+        }
+      });
+      
+      // 自定义拖拽缩放
+      let resizing = false;
+      let startX, startY, startW, startH;
+      
+      resizeHandle.addEventListener('pointerdown', (e) => {
+        resizing = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startW = imgDialog.offsetWidth;
+        startH = imgDialog.offsetHeight;
+        e.preventDefault();
+      });
+      
+      window.addEventListener('pointermove', (e) => {
+        if (!resizing) return;
+        
+        const newWidth = Math.max(400, Math.min(90 * window.innerWidth / 100, startW + e.clientX - startX));
+        const newHeight = Math.max(300, Math.min(90 * window.innerHeight / 100, startH + e.clientY - startY));
+        
+        imgDialog.style.width = newWidth + 'px';
+        imgDialog.style.height = newHeight + 'px';
+      });
+      
+      window.addEventListener('pointerup', () => {
+        resizing = false;
+      });
+      
+      // 在浏览器中打开图片
+      openInBrowserBtn.addEventListener('click', () => {
+        console.log('点击"在浏览器中打开"按钮');
+        console.log('当前图片URL:', currentImageUrl);
+        
+        if (currentImageUrl) {
+          try {
+            // 在UXP环境中使用uxp.shell.openExternal
+            const uxp = require('uxp');
+            if (uxp && uxp.shell && uxp.shell.openExternal) {
+              uxp.shell.openExternal(currentImageUrl);
+              console.log('在默认浏览器中打开图片');
+            } else {
+              console.log('uxp.shell.openExternal 不可用，尝试其他方式');
+              // 备用方案：创建临时链接
+              const link = document.createElement('a');
+              link.href = currentImageUrl;
+              link.target = '_blank';
+              link.rel = 'noopener noreferrer';
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+            }
+          } catch (error) {
+            console.error('打开图片失败:', error);
+            // 显示错误信息（在UXP环境中使用console.log而不是alert）
+            console.log('无法在浏览器中打开图片，请手动复制链接：' + currentImageUrl);
+          }
+        } else {
+          console.error('没有图片URL');
+          console.log('没有可用的图片链接');
+        }
+      });
+      
+      // 关闭图片查看面板
+      closePanelBtn.addEventListener('click', () => {
+        imageViewerPanel.style.display = 'none';
+        imageViewerOverlay.style.display = 'none';
+        isImagePanelOpen = false;
+        
+        // 恢复搜索区域的可见性
+        const searchElements = document.querySelectorAll('sp-textfield, sp-button, [style*="search"]');
+        searchElements.forEach((el) => {
+          el.style.visibility = 'visible';
+        });
+        
+        // 恢复滚动条容器的可见性
+        const scrollContainers = document.querySelectorAll('[style*="overflow"], [style*="scroll"]');
+        scrollContainers.forEach((el) => {
+          el.style.visibility = 'visible';
+        });
+        
+
+        
+        // 恢复背景页面滚动
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.top = '';
+      });
+      
+      // 点击面板背景关闭
+      imageViewerPanel.addEventListener('click', (event) => {
+        if (event.target === imageViewerPanel) {
+          imageViewerPanel.style.display = 'none';
+          imageViewerOverlay.style.display = 'none';
+          isImagePanelOpen = false;
+          currentZoom = 1;
+          updateZoom();
+          
+          // 恢复搜索区域的可见性
+          const searchElements = document.querySelectorAll('sp-textfield, sp-button, [style*="search"]');
+          searchElements.forEach((el) => {
+            el.style.visibility = 'visible';
+          });
+          
+          // 恢复滚动条容器的可见性
+          const scrollContainers = document.querySelectorAll('[style*="overflow"], [style*="scroll"]');
+          scrollContainers.forEach((el) => {
+            el.style.visibility = 'visible';
+          });
+          
+
+          
+          // 恢复背景页面滚动
+          document.body.style.overflow = '';
+          document.documentElement.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.width = '';
+          document.body.style.top = '';
+        }
+      });
+      
+
+      
+      // 缩放功能实现
+      function updateZoom() {
+        panelPhoto.style.transform = `scale(${currentZoom})`;
+        // 显示图片尺寸而不是缩放百分比
+        if (panelPhoto.naturalWidth && panelPhoto.naturalHeight) {
+          zoomInfo.textContent = `${panelPhoto.naturalWidth} × ${panelPhoto.naturalHeight}`;
+        } else {
+          zoomInfo.textContent = `${Math.round(currentZoom * 100)}%`;
+        }
+      }
+      
+
+      
+      // 面板滚轮缩放处理函数
+      function handleZoom(e) {
+        if (isImagePanelOpen) {
+          e.preventDefault();          // 阻止默认滚动
+          e.stopPropagation();         // 阻止事件冒泡到宿主容器
+          e.stopImmediatePropagation(); // 阻止同一元素上的其他监听器
+          const dir = e.deltaY < 0 ? 1 : -1;
+          currentZoom = Math.min(maxZoom, Math.max(minZoom, currentZoom + dir * zoomStep));
+          updateZoom();
+          console.log('面板滚轮缩放:', currentZoom);
+          return false;
+        }
+      }
+      
+      // 对话框滚轮缩放处理函数
+      function handleZoomDialog(e) {
+        e.preventDefault();          // 阻止默认滚动
+        e.stopPropagation();         // 阻止事件冒泡到宿主容器
+        e.stopImmediatePropagation(); // 阻止同一元素上的其他监听器
+        const dir = e.deltaY < 0 ? 1 : -1;
+        imgDialogZoom = Math.min(maxZoom, Math.max(minZoom, imgDialogZoom + dir * zoomStep));
+        photo.style.transform = `scale(${imgDialogZoom})`;
+        console.log('对话框滚轮缩放:', imgDialogZoom);
+        return false;
+      }
+      
+      // 将滚轮监听添加到图片容器 - 这是关键
+      imageContainer.addEventListener('wheel', handleZoom, { passive: false });
+      imageContainer.addEventListener('mousewheel', handleZoom, { passive: false });
+      
+      // 同时在面板级别也监听
+      imageViewerPanel.addEventListener('wheel', handleZoom, { passive: false });
+      imageViewerPanel.addEventListener('mousewheel', handleZoom, { passive: false });
+      
+      // 为对话框添加滚轮监听
+      imgDialog.addEventListener('wheel', handleZoomDialog, { passive: false });
+      imgDialog.addEventListener('mousewheel', handleZoomDialog, { passive: false });
+      
+
+      
+      // 全局滚轮事件阻止 - 当图片面板打开时阻止所有背景滚动
+      let isImagePanelOpen = false;
+      
+      // 阻止其他滚动事件 - 只在面板打开时生效
+      function preventOtherScroll(event) {
+        if (isImagePanelOpen) {
+          // 检查事件是否来自图片面板
+          const target = event.target;
+          if (target && (target.closest('#imageViewerPanel') || target === imageViewerPanel)) {
+            // 事件来自图片面板，不阻止
+            return;
+          }
+          // 阻止其他区域的滚动
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          return false;
+        }
+      }
+      
+      // 添加其他事件监听器
+      document.addEventListener('touchmove', preventOtherScroll, { capture: true, passive: false });
+      document.addEventListener('scroll', preventOtherScroll, { capture: true, passive: false });
+      document.addEventListener('keydown', (event) => {
+        if (isImagePanelOpen && (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'PageUp' || event.key === 'PageDown' || event.key === ' ' || event.key === 'Home' || event.key === 'End')) {
+          // 检查事件是否来自图片面板
+          const target = event.target;
+          if (target && (target.closest('#imageViewerPanel') || target === imageViewerPanel)) {
+            // 事件来自图片面板，允许处理
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          return false;
+        }
+      }, { capture: true });
+      
+                  // 全局函数：显示图片面板
+      window.showImagePanel = async function(imageUrl) {
+        console.log('=== 图片面板调试信息 ===');
+        console.log('showImagePanel 函数被调用');
+        console.log('图片URL:', imageUrl);
+        console.log('网络状态:', navigator.onLine ? '在线' : '离线');
+        console.log('imageViewerPanel 元素:', imageViewerPanel);
+        console.log('panelPhoto 元素:', panelPhoto);
+        
+        if (!imageUrl) {
+          console.error('错误：未提供图片URL');
+          imageViewerPanel.style.display = 'flex';
+          return;
+        }
+        
+        // 保存当前图片URL
+        currentImageUrl = imageUrl;
+        console.log('保存图片URL:', currentImageUrl);
+        
+        // 立即设置面板状态和阻止滚动 - 这是关键
+        isImagePanelOpen = true;
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.top = '0';
+        
+        // 强制隐藏所有可能的滚动条
+        document.documentElement.style.scrollbarWidth = 'none';
+        document.documentElement.style.msOverflowStyle = 'none';
+        document.body.style.scrollbarWidth = 'none';
+        document.body.style.msOverflowStyle = 'none';
+        
+
+        
+        // 强制设置图片查看面板为最高层级
+        imageViewerPanel.style.zIndex = '2147483647';
+        imageViewerPanel.style.position = 'fixed';
+        imageViewerPanel.style.top = '0';
+        imageViewerPanel.style.left = '0';
+        imageViewerPanel.style.width = '100vw';
+        imageViewerPanel.style.height = '100vh';
+        imageViewerPanel.style.background = 'rgba(0,0,0,0.9)';
+        imageViewerPanel.style.isolation = 'isolate';
+        
+        // 将面板移动到body的最末尾，确保DOM层级最高
+        if (imageViewerPanel.parentNode !== document.body) {
+          document.body.appendChild(imageViewerPanel);
+        }
+        
+        // 调试信息：检查层级关系
+        console.log('图片查看面板z-index:', imageViewerPanel.style.zIndex);
+        console.log('图片查看面板位置:', imageViewerPanel.style.position);
+        console.log('图片查看面板尺寸:', imageViewerPanel.style.width, 'x', imageViewerPanel.style.height);
+        console.log('图片查看面板父元素:', imageViewerPanel.parentNode);
+        
+        // 检查搜索区域元素
+        const searchElements = document.querySelectorAll('sp-textfield, sp-button, [style*="search"]');
+        searchElements.forEach((el, index) => {
+          console.log(`搜索元素${index}:`, el.tagName, 'z-index:', getComputedStyle(el).zIndex);
+        });
+        
+        // 强制设置搜索区域元素的z-index为较低值，并尝试隐藏它们
+        searchElements.forEach((el) => {
+          el.style.zIndex = '1';
+          el.style.position = 'relative';
+          // 尝试隐藏搜索区域
+          el.style.visibility = 'hidden';
+        });
+        
+        // 隐藏特定的滚动条容器，但不隐藏html和body
+        const scrollContainers = document.querySelectorAll('[style*="overflow"], [style*="scroll"]');
+        scrollContainers.forEach((el) => {
+          // 只隐藏不是图片查看面板相关的元素
+          if (!el.closest('#imageViewerPanel') && !el.closest('#imageViewerOverlay')) {
+            el.style.visibility = 'hidden';
+          }
+        });
+        
+        // 确保面板在最高层级
+        setTimeout(() => {
+          imageViewerPanel.style.zIndex = '2147483647';
+          imageViewerOverlay.style.zIndex = '2147483646';
+          console.log('延迟设置后的z-index:', imageViewerPanel.style.zIndex);
+        }, 100);
+        
+        // 重置缩放状态
+        currentZoom = 1;
+        // 初始化时显示"图片尺寸"，等图片加载完成后会更新为实际尺寸
+        zoomInfo.textContent = '图片尺寸';
+        
+        // 显示遮罩层和面板
+        imageViewerOverlay.style.display = 'block';
+        imageViewerPanel.style.display = 'flex';
+        
+        // 让容器获得焦点，确保滚轮事件被捕获
+        imageContainer.focus();
+          
+          console.log('面板显示状态:', imageViewerPanel.style.display);
+          console.log('面板可见性:', imageViewerPanel.offsetWidth, 'x', imageViewerPanel.offsetHeight);
+          console.log('面板位置:', imageViewerPanel.offsetTop, imageViewerPanel.offsetLeft);
+          console.log('面板z-index:', imageViewerPanel.style.zIndex);
+          console.log('面板背景色:', imageViewerPanel.style.backgroundColor);
+          
+          try {
+            console.log('开始加载图片:', imageUrl);
+            
+            // 直接加载实际图片
+            console.log('加载实际图片:', imageUrl);
+            panelPhoto.src = imageUrl;
+              
+            // 添加加载事件监听
+            panelPhoto.onload = function() {
+              console.log('✅ 面板图片加载成功:', imageUrl);
+              console.log('图片尺寸:', panelPhoto.naturalWidth, 'x', panelPhoto.naturalHeight);
+              
+              // 确保图片加载完成后也绑定滚轮事件
+              panelPhoto.addEventListener('wheel', handleZoom, { passive: false });
+              panelPhoto.addEventListener('mousewheel', handleZoom, { passive: false });
+              
+              // 图片加载完成后再次让容器获得焦点
+              imageContainer.focus();
+              
+              // 重置对话框缩放状态
+              imgDialogZoom = 1;
+              
+              // 更新左下角显示图片尺寸
+              updateZoom();
+              
+              // 调试：检查zoomInfo元素位置
+              console.log('zoomInfo元素位置:', zoomInfo.offsetLeft, zoomInfo.offsetTop);
+              console.log('zoomInfo元素尺寸:', zoomInfo.offsetWidth, zoomInfo.offsetHeight);
+              console.log('zoomInfo元素z-index:', getComputedStyle(zoomInfo).zIndex);
+              console.log('zoomInfo元素可见性:', getComputedStyle(zoomInfo).visibility);
+            };
+            
+            panelPhoto.onerror = function() {
+              console.error('❌ 面板图片加载失败:', imageUrl);
+              
+              // 尝试方法2：使用Image对象
+              console.log('方法2：使用Image对象');
+              const testImg = new Image();
+              testImg.onload = function() {
+                console.log('✅ Image对象加载成功:', imageUrl);
+                panelPhoto.src = imageUrl;
+              };
+              
+              testImg.onerror = function() {
+                console.error('❌ Image对象也加载失败:', imageUrl);
+                
+                // 显示错误信息
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = 'color: #ff6b6b; font-size: 14px; text-align: center; padding: 20px; background: rgba(255, 107, 107, 0.1); border-radius: 4px; margin: 20px;';
+                errorDiv.innerHTML = '图片加载失败<br><br>URL: ' + imageUrl + '<br><br>可能的原因：<br>1. 网络连接问题<br>2. 图片URL无效<br>3. 跨域访问限制';
+                
+                // 清空面板内容并添加错误信息
+                const panelContent = imageViewerPanel.querySelector('div:nth-child(2)');
+                panelContent.innerHTML = '';
+                panelContent.appendChild(errorDiv);
+              };
+              
+              testImg.src = imageUrl;
+            };
+            
+          } catch (error) {
+            console.error('图片加载错误:', error);
+          }
+        };
+        
+        // 测试函数是否可用
+        console.log('showImagePanel 函数已定义:', typeof window.showImagePanel);
+        
+        // 确保函数在全局可用
+        if (typeof window.showImagePanel === 'function') {
+          console.log('✅ showImagePanel 函数已成功定义并可用');
+        } else {
+          console.error('❌ showImagePanel 函数定义失败');
+        }
+        
+        // 全局函数：显示图片对话框
+        window.showImageDialog = async function(imageUrl) {
+        console.log('=== 图片对话框调试信息 ===');
+        console.log('图片URL:', imageUrl);
+        console.log('网络状态:', navigator.onLine ? '在线' : '离线');
+        
+        if (!imageUrl) {
+          console.error('错误：未提供图片URL');
+          photo.alt = '未提供图片URL';
+          imgDialog.showModal();
+          return;
+        }
+        
+        // 显示加载状态
+        photo.alt = '加载中…';
+        
+        // 阻止背景滚动
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        
+        imgDialog.showModal();
+        
+        try {
+          // 直接设置图片src，就像参考附件那样
+          console.log('开始加载图片:', imageUrl);
+          
+          // 创建测试图片来获取尺寸信息
+          const testImg = new Image();
+          testImg.onload = function() {
+            console.log('✅ 图片加载成功:', imageUrl);
+            console.log('图片尺寸:', testImg.naturalWidth, 'x', testImg.naturalHeight);
+            
+            // 直接设置对话框图片的src
+            photo.src = imageUrl;
+            photo.alt = '参考附件';
+            
+            // 为对话框图片添加滚轮事件监听
+            photo.addEventListener('wheel', handleZoomDialog, { passive: false });
+            photo.addEventListener('mousewheel', handleZoomDialog, { passive: false });
+            
+            // 重置对话框缩放状态
+            imgDialogZoom = 1;
+          };
+          
+          testImg.onerror = function() {
+            console.error('❌ 图片加载失败:', imageUrl);
+            photo.alt = '图片加载失败';
+            showError(imageUrl);
+          };
+          
+          // 开始加载测试图片
+          testImg.src = imageUrl;
+          
+        } catch (error) {
+          console.error('图片加载错误:', error);
+          photo.alt = '图片加载失败';
+          showError(imageUrl);
+        }
+      };
+      
+      // 显示错误信息
+      function showError(imageUrl) {
+        const errorContainer = document.createElement('div');
+        errorContainer.className = 'error-text';
+        errorContainer.innerHTML = '图片加载失败<br><br>图片URL: ' + imageUrl + '<br><br>可能的原因：<br>1. 网络连接问题<br>2. 图片URL无效<br>3. 跨域访问限制';
+        
+        const testButton = document.createElement('button');
+        testButton.textContent = '测试网络连接';
+        testButton.style.cssText = 'padding: 5px 10px; background: #1976d2; color: white; border: none; border-radius: 3px; cursor: pointer; margin-top: 10px;';
+        testButton.addEventListener('click', () => {
+          window.testNetworkConnection();
+        });
+        
+        // 清空对话框内容并添加错误信息
+        imgDialog.innerHTML = '';
+        imgDialog.appendChild(errorContainer);
+        imgDialog.appendChild(testButton);
+        imgDialog.appendChild(resizeHandle);
+        imgDialog.appendChild(closeDialogBtn.parentElement);
+      }
+      
+      // 网络连接测试
+      window.testNetworkConnection = function() {
+        console.log('=== 网络连接测试 ===');
+        
+        // 测试基本网络连接
+        fetch('https://httpbin.org/get', { method: 'GET' })
+          .then(response => {
+            console.log('✅ 基本网络连接正常:', response.status);
+          })
+          .catch(error => {
+            console.error('❌ 基本网络连接失败:', error);
+          });
+        
+        // 测试目标域名连接
+        fetch('https://img.365d4u.com', { method: 'HEAD' })
+          .then(response => {
+            console.log('✅ 目标域名连接正常:', response.status);
+          })
+          .catch(error => {
+            console.error('❌ 目标域名连接失败:', error);
+          });
+      };
+    </script>
+  </body>
+</html>

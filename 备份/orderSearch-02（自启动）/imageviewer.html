@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #222;
+      font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
+    }
+    
+    #photo {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    
+    .loading {
+      color: #fff;
+      font-size: 16px;
+      text-align: center;
+    }
+    
+    .error {
+      color: #ff6b6b;
+      font-size: 14px;
+      text-align: center;
+      padding: 20px;
+      background: rgba(255, 107, 107, 0.1);
+      border-radius: 4px;
+      margin: 20px;
+    }
+    
+    .controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 10px;
+    }
+    
+    .btn {
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      backdrop-filter: blur(10px);
+    }
+    
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    
+    .info {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button class="btn" id="reloadBtn">重新加载</button>
+    <button class="btn" id="testBtn">测试网络</button>
+  </div>
+  
+  <img id="photo" src="" alt="加载中…" />
+  
+  <div class="info" id="info">等待加载图片...</div>
+  
+  <script>
+    let currentImageUrl = '';
+    
+    // 获取URL参数中的图片地址
+    function getImageUrlFromParams() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('imageUrl');
+    }
+    
+    // 加载图片
+    async function loadImage(imageUrl) {
+      if (!imageUrl) {
+        showError('未提供图片URL');
+        return;
+      }
+      
+      currentImageUrl = imageUrl;
+      const photo = document.getElementById('photo');
+      const info = document.getElementById('info');
+      
+      // 显示加载状态
+      photo.style.display = 'none';
+      info.textContent = '正在加载图片...';
+      
+      try {
+        console.log('开始加载图片:', imageUrl);
+        const response = await fetch(imageUrl);
+        
+        if (!response.ok) {
+          throw new Error('图片请求失败: ' + response.status);
+        }
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        // 创建测试图片
+        const testImg = new Image();
+        testImg.onload = function() {
+          console.log('✅ 图片加载成功:', imageUrl);
+          console.log('图片尺寸:', testImg.naturalWidth, 'x', testImg.naturalHeight);
+          
+          photo.src = url;
+          photo.style.display = 'block';
+          info.textContent = `图片尺寸: ${testImg.naturalWidth} x ${testImg.naturalHeight}`;
+        };
+        
+        testImg.onerror = function() {
+          console.error('❌ 图片加载失败:', imageUrl);
+          showError('图片加载失败');
+        };
+        
+        testImg.src = url;
+        
+      } catch (error) {
+        console.error('图片加载错误:', error);
+        showError('图片加载失败: ' + error.message);
+      }
+    }
+    
+    // 显示错误信息
+    function showError(message) {
+      const photo = document.getElementById('photo');
+      const info = document.getElementById('info');
+      
+      photo.style.display = 'none';
+      info.textContent = message;
+      
+      // 创建错误显示
+      const errorDiv = document.createElement('div');
+      errorDiv.className = 'error';
+      errorDiv.innerHTML = message;
+      document.body.appendChild(errorDiv);
+    }
+    
+    // 测试网络连接
+    async function testNetwork() {
+      console.log('=== 网络连接测试 ===');
+      
+      try {
+        // 测试基本网络连接
+        const response1 = await fetch('https://httpbin.org/get');
+        console.log('✅ 基本网络连接正常:', response1.status);
+        
+        // 测试目标域名连接
+        const response2 = await fetch('https://img.365d4u.com', { method: 'HEAD' });
+        console.log('✅ 目标域名连接正常:', response2.status);
+        
+        alert('网络连接测试完成，请查看控制台');
+      } catch (error) {
+        console.error('❌ 网络连接失败:', error);
+        alert('网络连接失败: ' + error.message);
+      }
+    }
+    
+    // 重新加载图片
+    function reloadImage() {
+      if (currentImageUrl) {
+        loadImage(currentImageUrl);
+      } else {
+        alert('没有可重新加载的图片');
+      }
+    }
+    
+    // 事件监听
+    document.getElementById('reloadBtn').addEventListener('click', reloadImage);
+    document.getElementById('testBtn').addEventListener('click', testNetwork);
+    
+    // 页面加载时尝试加载图片
+    window.addEventListener('load', () => {
+      const imageUrl = getImageUrlFromParams();
+      if (imageUrl) {
+        loadImage(imageUrl);
+      } else {
+        showError('请在URL参数中提供imageUrl');
+      }
+    });
+    
+    // 监听来自主面板的消息
+    window.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'loadImage') {
+        loadImage(event.data.imageUrl);
+      }
+    });
+  </script>
+</body>
+</html> 
