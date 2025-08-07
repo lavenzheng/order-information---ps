@@ -41,8 +41,16 @@
     display: flex;                    /* 弹性布局 */
     align-items: center;              /* 垂直居中对齐 */
     margin-top: 20px;                 /* 顶部间距 */
-    gap: 10px;                        /* 元素间距 */
+    gap: 6px;                         /* 减小元素间距 */
     flex-shrink: 0;                   /* 防止收缩 */
+    margin-left: 8px;                 /* 左边距 */
+    margin-right: 8px;                /* 右边距 */
+    flex-wrap: nowrap;                /* 禁止换行 */
+    justify-content: flex-start;      /* 左对齐 */
+    overflow: visible;                /* 允许溢出，避免截断 */
+    min-width: 250px;                 /* 最小宽度 */
+    box-sizing: border-box;           /* 盒模型 */
+    width: 100%;                      /* 占满容器宽度 */
 }
 
 /**
@@ -50,7 +58,11 @@
  * 作用：用户输入产品编号的文本框
  */
 .search-input {
-    flex: 1;                          /* 占据剩余空间 */
+    width: 150px !important;          /* 强制固定宽度 */
+    min-width: 150px !important;      /* 强制最小宽度 */
+    max-width: none !important;       /* 移除最大宽度限制 */
+    flex: none !important;            /* 禁用flex，使用固定宽度 */
+    box-sizing: border-box;           /* 盒模型 */
 }
 
 /**
@@ -58,7 +70,14 @@
  * 作用：触发搜索功能的按钮
  */
 .search-button {
-    margin-left: 10px;                /* 左侧间距 */
+    margin-left: 3px;                 /* 减小左侧间距 */
+    min-width: 45px;                  /* 减小最小宽度 */
+    max-width: 60px;                  /* 减小最大宽度 */
+    flex-shrink: 0;                   /* 禁止收缩 */
+    white-space: nowrap;              /* 文字不换行 */
+    overflow: hidden;                 /* 隐藏溢出 */
+    text-overflow: ellipsis;          /* 文字省略号 */
+    box-sizing: border-box;           /* 盒模型 */
 }
 
 /**
@@ -66,7 +85,26 @@
  * 作用：清空输入框内容的按钮
  */
 .clear-button {
-    margin-left: 5px;                 /* 左侧间距 */
+    margin-left: 2px;                 /* 减小左侧间距 */
+    min-width: 45px;                  /* 减小最小宽度 */
+    max-width: 60px;                  /* 减小最大宽度 */
+    flex-shrink: 0;                   /* 禁止收缩 */
+    white-space: nowrap;              /* 文字不换行 */
+    overflow: hidden;                 /* 隐藏溢出 */
+    text-overflow: ellipsis;          /* 文字省略号 */
+    background-color: #9e9e9e !important; /* 灰色背景 */
+    color: #ffffff !important;        /* 白色文字 */
+    border-color: #9e9e9e !important; /* 灰色边框 */
+    box-sizing: border-box;           /* 盒模型 */
+}
+
+/**
+ * 清空按钮悬停效果
+ * 作用：鼠标悬停时的颜色变化
+ */
+.clear-button:hover {
+    background-color: #757575 !important; /* 深灰色背景 */
+    border-color: #757575 !important;     /* 深灰色边框 */
 }
 
 /* ========================================
@@ -105,7 +143,7 @@
 .search-results-container {
     margin-top: 5px;                  /* 顶部间距 */
     position: absolute;                /* 绝对定位 */
-    top: 60px;                        /* 距离顶部60px */
+    top: 80px;                        /* 增加距离顶部距离，避免与搜索区域重叠 */
     left: 8px;                        /* 距离左边8px */
     right: 8px;                       /* 距离右边8px */
     bottom: 8px;                      /* 距离底部8px */
@@ -442,12 +480,24 @@
 
 /**
  * 小屏幕适配
- * 作用：在小屏幕上调整布局
+ * 作用：在小屏幕上调整布局，但保持搜索区域不换行
  */
 @media (max-width: 480px) {
     .search-area {
-        flex-direction: column;        /* 垂直排列 */
-        gap: 8px;                     /* 减小间距 */
+        /* 移除 flex-direction: column; 确保不换行 */
+        gap: 4px;                     /* 进一步减小间距 */
+        max-width: 280px;             /* 减小最大宽度 */
+    }
+    
+    .search-input {
+        max-width: 100px;             /* 减小输入框宽度 */
+        min-width: 60px;              /* 减小最小宽度 */
+    }
+    
+    .search-button,
+    .clear-button {
+        min-width: 40px;              /* 减小按钮最小宽度 */
+        max-width: 50px;              /* 减小按钮最大宽度 */
     }
     
     .info-label {
