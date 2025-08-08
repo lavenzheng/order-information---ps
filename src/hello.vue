@@ -4,13 +4,17 @@
         <div class="search-area">
             <sp-textfield 
                 :value="inputText"
-                @input="handleInput"
+                v-on:input="handleInput"
                 placeholder="请输入产品编号..."
                 label="产品编号搜索"
                 class="search-input">
             </sp-textfield>
             <sp-button v-on:click="searchProduct" class="search-button">搜索</sp-button>
             <sp-button v-on:click="clearInput" class="clear-button">清空</sp-button>
+            <sp-button v-on:click="readXMPParams" class="xmp-read-button">读取XMP</sp-button>
+            <sp-button v-on:click="writeXMPParamsWithInput" class="xmp-write-button">写入搜索</sp-button>
+            <sp-button v-on:click="writeCurrentResultsToXMP" class="xmp-write-results-button">写入订单</sp-button>
+            <sp-button v-on:click="clearXMPParams" class="xmp-clear-button">清除XMP</sp-button>
         </div>
         
         <!-- 加载状态 -->
@@ -34,35 +38,35 @@
                     <ProductInfo 
                         :product="product" 
                         :expanded="productInfoExpanded"
-                        @toggle="toggleProductInfo"
-                        @openImage="openImageWithIndex" />
+                        v-on:toggle="toggleProductInfo"
+                        v-on:openImage="openImageWithIndex" />
                     
                     <!-- 支付信息 -->
                     <PaymentInfo 
                         :product="product" 
                         :expanded="paymentInfoExpanded"
-                        @toggle="togglePaymentInfo" />
+                        v-on:toggle="togglePaymentInfo" />
                     
                     <!-- 客户信息 -->
                     <CustomerInfo 
                         :product="product" 
                         :expanded="customerInfoExpanded"
-                        @toggle="toggleCustomerInfo" />
+                        v-on:toggle="toggleCustomerInfo" />
                 </div>
             </div>
         </div>
         
         <!-- 图片预览模态框 -->
-        <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
-            <div class="image-preview-container" @click.stop>
+        <div v-if="showImagePreview" class="image-preview-modal" v-on:click="closeImagePreview">
+            <div class="image-preview-container" v-on:click.stop>
                 <!-- 关闭按钮 -->
-                <button class="close-button" @click="closeImagePreview">&times;</button>
+                <button class="close-button" v-on:click="closeImagePreview">&times;</button>
                 
                 <!-- 上一张按钮 -->
                 <button 
                     v-if="currentImageList.length > 1" 
                     class="nav-button prev-button" 
-                    @click="prevImage"
+                    v-on:click="prevImage"
                     :disabled="currentImageIndex === 0"
                 >
                     ‹
@@ -72,7 +76,7 @@
                 <button 
                     v-if="currentImageList.length > 1" 
                     class="nav-button next-button" 
-                    @click="nextImage"
+                    v-on:click="nextImage"
                     :disabled="currentImageIndex === currentImageList.length - 1"
                 >
                     ›
@@ -84,8 +88,8 @@
                         :src="currentImageUrl" 
                         :alt="`图片 ${currentImageIndex + 1}`"
                         class="preview-image"
-                        @error="handlePreviewImageError"
-                        @load="handlePreviewImageLoad"
+                        v-on:error="handlePreviewImageError"
+                        v-on:load="handlePreviewImageLoad"
                     />
                 </div>
                 
@@ -100,7 +104,7 @@
                     <span class="image-counter">{{ currentImageIndex + 1 }} / {{ currentImageList.length }}</span>
                     
                     <!-- 右侧：用浏览器打开按钮 -->
-                    <button class="browser-open-btn" @click="openCurrentImageInBrowser">
+                    <button class="browser-open-btn" v-on:click="openCurrentImageInBrowser">
                         用浏览器打开
                     </button>
                 </div>
@@ -115,6 +119,7 @@ import PaymentInfo from './components/PaymentInfo.vue';
 import CustomerInfo from './components/CustomerInfo.vue';
 import { searchProductByNo } from './api/productApi';
 import { openExternalUrl } from './utils/uxpUtils';
+import { readParamsFromXMP, writeParamsToXMP, clearParamsFromXMP, hasXMPParams } from './utils/xmpUtils';
 import config from './config';
 
 export default {
@@ -538,38 +543,32 @@ export default {
             }
         },
 
-        // 自动从参数中获取搜索关键词并搜索（初始检查）
-        autoSearchFromParams() {
+        // 自动从XMP元数据读取订单信息并展示
+        async autoSearchFromParams() {
+            console.log('=== 开始从XMP元数据读取订单信息 ===');
+            
+            // 尝试从XMP元数据读取订单信息
             try {
-                // 方法1: 从URL参数获取
-                const urlParams = new URLSearchParams(window.location.search);
-                const searchParam = urlParams.get('search') || urlParams.get('q') || urlParams.get('product');
+                // 添加延迟，确保PS完全加载
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // 方法2: 从hash参数获取
-                const hashParams = new URLSearchParams(window.location.hash.substring(1));
-                const hashSearchParam = hashParams.get('search') || hashParams.get('q') || hashParams.get('product');
-                
-                // 方法3: 从localStorage获取（如果之前保存过）
-                const savedSearch = localStorage.getItem('autoSearchProduct');
-                
-                // 优先级: URL参数 > Hash参数 > localStorage
-                const searchKeyword = searchParam || hashSearchParam || savedSearch;
-                
-                if (searchKeyword && searchKeyword.trim()) {
-                    console.log('初始检查到搜索关键词:', searchKeyword);
-                    this.lastSearchedKeyword = searchKeyword;
-                    this.inputText = searchKeyword.trim();
-                    
-                    // 延迟一点时间确保组件完全加载后再搜索
-                    this.$nextTick(() => {
-                        setTimeout(() => {
-                            this.searchProduct();
-                        }, 500);
-                    });
+                const xmpParams = await readParamsFromXMP();
+                if (xmpParams && xmpParams.orderInfo) {
+                    console.log('从XMP元数据读取到订单信息:', xmpParams.orderInfo);
+                    this.displayOrderInfo(xmpParams.orderInfo);
+                    return;
+                } else if (xmpParams && xmpParams.searchKeyword) {
+                    // 兼容旧格式：如果只有searchKeyword，则执行搜索
+                    console.log('从XMP元数据读取到搜索关键词:', xmpParams.searchKeyword);
+                    this.handleNewParameter(xmpParams.searchKeyword);
+                    return;
                 }
             } catch (error) {
-                console.error('初始参数检查失败:', error);
+                console.log('从XMP元数据读取参数失败:', error.message);
+                // 不显示错误信息，避免干扰用户
             }
+            
+            console.log('XMP元数据中没有找到订单信息');
         },
         
         // 保存搜索关键词到localStorage（供下次自动搜索使用）
@@ -587,6 +586,201 @@ export default {
             localStorage.removeItem('autoSearchProduct');
             localStorage.removeItem('pluginSearchTimestamp');
             console.log('已清除上次搜索记录');
+        },
+        
+        // 从XMP元数据读取参数
+        async readXMPParams() {
+            try {
+                // 添加延迟，确保PS稳定
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                const params = await readParamsFromXMP();
+                console.log('XMP参数读取结果:', params);
+                if (params && params.orderInfo) {
+                    this.errorMessage = `读取到XMP订单信息`;
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 3000);
+                    this.displayOrderInfo(params.orderInfo);
+                } else if (params && params.searchKeyword) {
+                    this.errorMessage = `读取到XMP参数: ${params.searchKeyword}`;
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 3000);
+                } else {
+                    this.errorMessage = '文档中没有XMP参数';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 3000);
+                }
+                return params;
+            } catch (error) {
+                console.error('读取XMP参数失败:', error);
+                this.errorMessage = '读取XMP参数失败，请检查文档状态';
+                setTimeout(() => {
+                    this.errorMessage = '';
+                }, 3000);
+                return null;
+            }
+        },
+        
+        // 展示订单信息
+        displayOrderInfo(orderInfo) {
+            try {
+                console.log('开始展示订单信息:', orderInfo);
+                
+                // 确保orderInfo是数组格式
+                let products = [];
+                if (Array.isArray(orderInfo)) {
+                    products = orderInfo;
+                } else if (orderInfo.products && Array.isArray(orderInfo.products)) {
+                    products = orderInfo.products;
+                } else if (orderInfo.product_id) {
+                    // 单个产品对象
+                    products = [orderInfo];
+                } else {
+                    console.error('订单信息格式不正确:', orderInfo);
+                    this.errorMessage = '订单信息格式不正确';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 3000);
+                    return;
+                }
+                
+                if (products.length === 0) {
+                    console.log('没有找到产品信息');
+                    this.errorMessage = '没有找到产品信息';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 3000);
+                    return;
+                }
+                
+                // 设置搜索结果
+                this.searchResult = products;
+                this.isLoading = false;
+                this.errorMessage = '';
+                
+                console.log(`成功展示 ${products.length} 个产品的订单信息`);
+                
+            } catch (error) {
+                console.error('展示订单信息失败:', error);
+                this.errorMessage = '展示订单信息失败';
+                setTimeout(() => {
+                    this.errorMessage = '';
+                }, 3000);
+            }
+        },
+        
+        // 写入参数到XMP元数据
+        async writeXMPParams(searchKeyword) {
+            try {
+                const params = {
+                    searchKeyword: searchKeyword,
+                    timestamp: Date.now(),
+                    source: 'plugin'
+                };
+                
+                const success = await writeParamsToXMP(params);
+                if (success) {
+                    console.log('成功写入参数到XMP元数据:', params);
+                    this.errorMessage = '参数已写入文档元数据';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 2000);
+                } else {
+                    console.log('写入XMP参数失败');
+                    this.errorMessage = '写入文档元数据失败';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('写入XMP参数失败:', error);
+                this.errorMessage = '写入文档元数据失败';
+                setTimeout(() => {
+                    this.errorMessage = '';
+                }, 2000);
+            }
+        },
+        
+        // 写入当前搜索结果到XMP元数据
+        async writeCurrentResultsToXMP() {
+            try {
+                if (!this.searchResult || this.searchResult.length === 0) {
+                    this.errorMessage = '没有搜索结果可写入';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 2000);
+                    return;
+                }
+                
+                const params = {
+                    orderInfo: this.searchResult,
+                    timestamp: Date.now(),
+                    source: 'plugin'
+                };
+                
+                const success = await writeParamsToXMP(params);
+                if (success) {
+                    console.log('成功写入订单信息到XMP元数据:', params);
+                    this.errorMessage = '订单信息已写入文档元数据';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 2000);
+                } else {
+                    console.log('写入XMP订单信息失败');
+                    this.errorMessage = '写入文档元数据失败';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('写入XMP订单信息失败:', error);
+                this.errorMessage = '写入文档元数据失败';
+                setTimeout(() => {
+                    this.errorMessage = '';
+                }, 2000);
+            }
+        },
+        
+        // 清除XMP元数据中的参数
+        async clearXMPParams() {
+            try {
+                const success = await clearParamsFromXMP();
+                if (success) {
+                    console.log('成功清除XMP元数据中的参数');
+                    this.errorMessage = '已清除文档元数据中的参数';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 2000);
+                } else {
+                    console.log('清除XMP参数失败');
+                    this.errorMessage = '清除文档元数据失败';
+                    setTimeout(() => {
+                        this.errorMessage = '';
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('清除XMP参数失败:', error);
+                this.errorMessage = '清除文档元数据失败';
+                setTimeout(() => {
+                    this.errorMessage = '';
+                }, 2000);
+            }
+        },
+        
+        // 将当前输入框的内容写入XMP元数据
+        async writeXMPParamsWithInput() {
+            if (!this.inputText.trim()) {
+                this.errorMessage = '请先输入搜索关键词';
+                setTimeout(() => {
+                    this.errorMessage = '';
+                }, 2000);
+                return;
+            }
+            
+            await this.writeXMPParams(this.inputText.trim());
         }
     }
 };
