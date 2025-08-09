@@ -20,7 +20,7 @@
                         v-model="serverUrl" 
                         type="text" 
                         placeholder="ws://localhost:8080"
-                        :disabled="isConnected"
+                        :disabled="isConnected" 
                     />
                 </div>
                 <div class="config-row">
