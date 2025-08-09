@@ -901,6 +901,27 @@
     color: #666;                      /* 禁用状态文字 */
 }
 
+/* 插件ID输入框特殊样式 */
+.config-row input[readonly] {
+    background-color: #e8f4fd;        /* 只读状态背景 - 浅蓝色 */
+    color: #1976d2;                   /* 只读状态文字 - 蓝色 */
+    border-color: #bbdefb;            /* 只读状态边框 - 浅蓝色 */
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; /* 等宽字体 */
+    font-size: 12px;                  /* 稍小的字体 */
+    cursor: default;                   /* 默认鼠标指针 */
+}
+
+.config-row input[readonly]:hover {
+    background-color: #e3f2fd;        /* 悬停时稍深的背景 */
+    border-color: #90caf9;            /* 悬停时稍深的边框 */
+}
+
+.config-row input[readonly]:focus {
+    outline: none;                     /* 移除焦点轮廓 */
+    border-color: #42a5f5;            /* 焦点时更深的边框 */
+    box-shadow: 0 0 0 2px rgba(66, 165, 245, 0.2); /* 焦点时蓝色阴影 */
+}
+
 /**
  * 连接控制按钮区域
  * 作用：包含连接和断开按钮

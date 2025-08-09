@@ -20,7 +20,7 @@
                         v-model="serverUrl" 
                         type="text" 
                         placeholder="ws://localhost:8080"
-                        :disabled="isConnected" 
+                        :disabled="isConnected"
                     />
                 </div>
                 <div class="config-row">
@@ -30,6 +30,16 @@
                         type="text" 
                         placeholder="test-protocol"
                         :disabled="isConnected"
+                    />
+                </div>
+                <div class="config-row">
+                    <label>插件ID:</label>
+                    <input 
+                        v-model="pluginId" 
+                        type="text" 
+                        placeholder="插件ID"
+                        :disabled="isConnected"
+                        readonly
                     />
                 </div>
             </div>
@@ -115,6 +125,7 @@ export default {
             statusText: '未连接',
             serverUrl: 'ws://localhost:8080',
             protocol: 'test-protocol',
+            pluginId: 'com.adobe.uxp.starter.vue',
             messageInput: '',
             messageLog: [],
             randomEnabled: false,
@@ -141,6 +152,9 @@ export default {
                     this.isConnected = true;
                     this.updateStatus('connected', '已连接');
                     this.addLog('WebSocket连接已建立', 'system');
+                    
+                    // 连接成功后自动发送插件ID
+                    this.sendPluginId();
                 };
                 
                 // 接收消息
@@ -166,6 +180,18 @@ export default {
             } catch (error) {
                 this.addLog(`连接失败: ${error.message}`, 'error');
                 this.updateStatus('disconnected', '连接失败');
+            }
+        },
+        
+        // 发送插件ID
+        sendPluginId() {
+            if (!this.isConnected || !this.ws) return;
+            
+            try {
+                this.ws.send(this.pluginId);
+                this.addLog(`发送插件ID: ${this.pluginId}`, 'sent');
+            } catch (error) {
+                this.addLog(`发送插件ID失败: ${error.message}`, 'error');
             }
         },
         
