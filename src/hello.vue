@@ -52,6 +52,11 @@
             </div>
         </div>
         
+        <!-- WebSocket 客户端 -->
+        <WebSocketClient 
+            :expanded="websocketExpanded"
+            @toggle="toggleWebSocket" />
+        
         <!-- 图片预览模态框 -->
         <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
             <div class="image-preview-container" @click.stop>
@@ -113,6 +118,7 @@
 import ProductInfo from './components/ProductInfo.vue';
 import PaymentInfo from './components/PaymentInfo.vue';
 import CustomerInfo from './components/CustomerInfo.vue';
+import WebSocketClient from './components/WebSocketClient.vue';
 import { searchProductByNo } from './api/productApi';
 import { openExternalUrl } from './utils/uxpUtils';
 import config from './config';
@@ -122,7 +128,8 @@ export default {
     components: {
         ProductInfo,
         PaymentInfo,
-        CustomerInfo
+        CustomerInfo,
+        WebSocketClient
     },
     data() {
         return {
@@ -133,6 +140,7 @@ export default {
             productInfoExpanded: config.ui.defaultExpanded.productInfo,
             customerInfoExpanded: config.ui.defaultExpanded.customerInfo,
             paymentInfoExpanded: config.ui.defaultExpanded.paymentInfo,
+            websocketExpanded: false,
             // 图片预览相关
             showImagePreview: false,
             currentImageList: [],
@@ -202,6 +210,10 @@ export default {
         
         togglePaymentInfo() {
             this.paymentInfoExpanded = !this.paymentInfoExpanded;
+        },
+        
+        toggleWebSocket() {
+            this.websocketExpanded = !this.websocketExpanded;
         },
         
         // 新的图片预览方法

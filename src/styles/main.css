@@ -822,7 +822,293 @@
 } 
 
 /* ========================================
- * 15. 图片预览模态框样式
+ * 15. WebSocket 客户端样式
+ * ======================================== */
+
+/**
+ * WebSocket 区域容器
+ * 作用：为WebSocket功能提供容器
+ */
+.websocket-section {
+    margin-bottom: 20px;              /* 底部间距 */
+}
+
+/**
+ * 连接状态指示器
+ * 作用：显示当前连接状态
+ */
+.connection-status {
+    margin-bottom: 15px;              /* 底部间距 */
+}
+
+.status-indicator {
+    padding: 8px 12px;                /* 内边距 */
+    border-radius: 6px;               /* 圆角 */
+    font-weight: 500;                 /* 字体粗细 */
+    text-align: center;               /* 文字居中 */
+    font-size: 14px;                  /* 字体大小 */
+}
+
+.status-indicator.connected {
+    background-color: #d4edda;        /* 绿色背景 */
+    color: #155724;                   /* 绿色文字 */
+    border: 1px solid #c3e6cb;       /* 绿色边框 */
+}
+
+.status-indicator.disconnected {
+    background-color: #f8d7da;        /* 红色背景 */
+    color: #721c24;                   /* 红色文字 */
+    border: 1px solid #f5c6cb;       /* 红色边框 */
+}
+
+.status-indicator.connecting {
+    background-color: #fff3cd;        /* 黄色背景 */
+    color: #856404;                   /* 黄色文字 */
+    border: 1px solid #ffeaa7;       /* 黄色边框 */
+}
+
+/**
+ * 连接配置区域
+ * 作用：包含服务器地址和协议配置
+ */
+.connection-config {
+    margin-bottom: 15px;              /* 底部间距 */
+}
+
+.config-row {
+    display: flex;                    /* 弹性布局 */
+    align-items: center;              /* 垂直居中 */
+    margin-bottom: 10px;              /* 底部间距 */
+}
+
+.config-row label {
+    width: 100px;                     /* 标签宽度 */
+    font-weight: 500;                 /* 字体粗细 */
+    font-size: 14px;                  /* 字体大小 */
+    flex-shrink: 0;                   /* 禁止收缩 */
+}
+
+.config-row input {
+    flex: 1;                          /* 占据剩余空间 */
+    padding: 8px 12px;                /* 内边距 */
+    border: 1px solid #ddd;           /* 边框 */
+    border-radius: 4px;               /* 圆角 */
+    font-size: 14px;                  /* 字体大小 */
+}
+
+.config-row input:disabled {
+    background-color: #f5f5f5;        /* 禁用状态背景 */
+    color: #666;                      /* 禁用状态文字 */
+}
+
+/**
+ * 连接控制按钮区域
+ * 作用：包含连接和断开按钮
+ */
+.connection-controls {
+    margin-bottom: 15px;              /* 底部间距 */
+    display: flex;                    /* 弹性布局 */
+    gap: 10px;                        /* 按钮间距 */
+}
+
+/**
+ * 控制按钮基础样式
+ * 作用：为所有控制按钮提供基础样式
+ */
+.control-btn {
+    padding: 8px 16px;                /* 内边距 */
+    border: none;                     /* 无边框 */
+    border-radius: 4px;               /* 圆角 */
+    font-size: 14px;                  /* 字体大小 */
+    cursor: pointer;                  /* 鼠标指针 */
+    transition: all 0.3s ease;        /* 过渡动画 */
+    font-weight: 500;                 /* 字体粗细 */
+}
+
+.control-btn:hover:not(:disabled) {
+    transform: translateY(-1px);      /* 悬停时轻微上移 */
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); /* 悬停阴影 */
+}
+
+.control-btn:disabled {
+    opacity: 0.6;                     /* 禁用状态透明度 */
+    cursor: not-allowed;              /* 禁用状态鼠标指针 */
+}
+
+/**
+ * 连接按钮样式
+ */
+.connect-btn {
+    background-color: #28a745;        /* 绿色背景 */
+    color: white;                     /* 白色文字 */
+}
+
+.connect-btn:hover:not(:disabled) {
+    background-color: #218838;        /* 悬停时深绿色 */
+}
+
+/**
+ * 断开按钮样式
+ */
+.disconnect-btn {
+    background-color: #dc3545;        /* 红色背景 */
+    color: white;                     /* 白色文字 */
+}
+
+.disconnect-btn:hover:not(:disabled) {
+    background-color: #c82333;        /* 悬停时深红色 */
+}
+
+/**
+ * 消息区域样式
+ * 作用：包含消息输入和快捷操作
+ */
+.message-section {
+    margin-bottom: 15px;              /* 底部间距 */
+}
+
+.message-input-row {
+    display: flex;                    /* 弹性布局 */
+    gap: 10px;                        /* 间距 */
+    margin-bottom: 10px;              /* 底部间距 */
+}
+
+.message-input {
+    flex: 1;                          /* 占据剩余空间 */
+    padding: 8px 12px;                /* 内边距 */
+    border: 1px solid #ddd;           /* 边框 */
+    border-radius: 4px;               /* 圆角 */
+    font-size: 14px;                  /* 字体大小 */
+}
+
+.send-btn {
+    background-color: #007bff;        /* 蓝色背景 */
+    color: white;                     /* 白色文字 */
+}
+
+.send-btn:hover:not(:disabled) {
+    background-color: #0056b3;        /* 悬停时深蓝色 */
+}
+
+/**
+ * 快捷操作按钮区域
+ * 作用：包含Echo、随机数、快速计数等快捷操作
+ */
+.quick-actions {
+    display: flex;                    /* 弹性布局 */
+    gap: 8px;                         /* 按钮间距 */
+    flex-wrap: wrap;                  /* 自动换行 */
+}
+
+.action-btn {
+    background-color: #6c757d;        /* 灰色背景 */
+    color: white;                     /* 白色文字 */
+    font-size: 12px;                  /* 较小字体 */
+    padding: 6px 12px;                /* 较小内边距 */
+}
+
+.action-btn:hover:not(:disabled) {
+    background-color: #5a6268;        /* 悬停时深灰色 */
+}
+
+.action-btn.active {
+    background-color: #17a2b8;        /* 激活状态蓝色 */
+}
+
+.action-btn.active:hover:not(:disabled) {
+    background-color: #138496;        /* 激活状态悬停深蓝色 */
+}
+
+/**
+ * 消息日志区域样式
+ * 作用：显示消息发送和接收的日志
+ */
+.message-log-section {
+    border: 1px solid #ddd;           /* 边框 */
+    border-radius: 6px;               /* 圆角 */
+    overflow: hidden;                 /* 隐藏溢出 */
+}
+
+.log-header {
+    display: flex;                    /* 弹性布局 */
+    justify-content: space-between;   /* 两端对齐 */
+    align-items: center;              /* 垂直居中 */
+    padding: 10px 15px;              /* 内边距 */
+    background-color: #f8f9fa;        /* 浅灰背景 */
+    border-bottom: 1px solid #ddd;    /* 底部边框 */
+}
+
+.log-header h4 {
+    margin: 0;                        /* 移除默认边距 */
+    font-size: 16px;                  /* 字体大小 */
+    color: #333;                      /* 文字颜色 */
+}
+
+.clear-btn {
+    background-color: #6c757d;        /* 灰色背景 */
+    color: white;                     /* 白色文字 */
+    font-size: 12px;                  /* 较小字体 */
+    padding: 4px 8px;                 /* 较小内边距 */
+}
+
+.clear-btn:hover:not(:disabled) {
+    background-color: #5a6268;        /* 悬停时深灰色 */
+}
+
+/**
+ * 消息日志容器
+ * 作用：显示具体的日志条目
+ */
+.message-log {
+    height: 200px;                    /* 固定高度 */
+    overflow-y: auto;                 /* 垂直滚动 */
+    padding: 10px;                    /* 内边距 */
+    background-color: #f8f9fa;        /* 浅灰背景 */
+}
+
+/**
+ * 日志条目样式
+ * 作用：单个日志条目的样式
+ */
+.log-item {
+    margin-bottom: 8px;               /* 底部间距 */
+    padding: 8px;                     /* 内边距 */
+    border-radius: 4px;               /* 圆角 */
+    font-size: 12px;                  /* 字体大小 */
+    font-family: 'Courier New', monospace; /* 等宽字体 */
+}
+
+.log-item.sent {
+    background-color: #d1ecf1;        /* 发送消息背景 */
+    color: #0c5460;                   /* 发送消息文字 */
+}
+
+.log-item.received {
+    background-color: #d4edda;        /* 接收消息背景 */
+    color: #155724;                   /* 接收消息文字 */
+}
+
+.log-item.error {
+    background-color: #f8d7da;        /* 错误消息背景 */
+    color: #721c24;                   /* 错误消息文字 */
+}
+
+.log-item.system {
+    background-color: #fff3cd;        /* 系统消息背景 */
+    color: #856404;                   /* 系统消息文字 */
+}
+
+.log-time {
+    color: #666;                      /* 时间戳颜色 */
+    margin-right: 8px;                /* 右侧间距 */
+}
+
+.log-content {
+    font-weight: 500;                 /* 内容字体粗细 */
+}
+
+/* ========================================
+ * 16. 图片预览模态框样式
  * ======================================== */
 
 /**
