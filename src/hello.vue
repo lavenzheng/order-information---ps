@@ -1,5 +1,12 @@
 <template>
     <div class="plugin-container">
+        <!-- WebSocket连接区域 -->
+        <WebSocketClient 
+            :expanded="websocketExpanded"
+            @toggle="toggleWebsocket"
+            @orderDataReceived="handleOrderDataReceived"
+        />
+        
         <!-- 搜索区域 -->
         <div class="search-area">
             <sp-textfield 
@@ -51,11 +58,6 @@
                 </div>
             </div>
         </div>
-        
-        <!-- WebSocket 客户端 -->
-        <WebSocketClient 
-            :expanded="websocketExpanded"
-            @toggle="toggleWebSocket" />
         
         <!-- 图片预览模态框 -->
         <div v-if="showImagePreview" class="image-preview-modal" @click="closeImagePreview">
@@ -140,12 +142,13 @@ export default {
             productInfoExpanded: config.ui.defaultExpanded.productInfo,
             customerInfoExpanded: config.ui.defaultExpanded.customerInfo,
             paymentInfoExpanded: config.ui.defaultExpanded.paymentInfo,
-            websocketExpanded: false,
             // 图片预览相关
             showImagePreview: false,
             currentImageList: [],
             currentImageIndex: 0,
-            currentImageSize: null
+            currentImageSize: null,
+            // WebSocket相关
+            websocketExpanded: true
         };
     },
     computed: {
@@ -165,6 +168,30 @@ export default {
         document.removeEventListener('keydown', this.handleKeydown);
     },
     methods: {
+        // 新增：切换WebSocket区域展开状态
+        toggleWebsocket() {
+            this.websocketExpanded = !this.websocketExpanded;
+        },
+        
+        // 新增：处理从WebSocket接收到的订单数据
+        handleOrderDataReceived(orderData) {
+            console.log('收到订单数据:', orderData);
+            
+            // 这里可以根据需要处理订单数据
+            // 例如：自动填充搜索框、显示通知等
+            
+            // 如果订单数据包含产品编号，可以自动搜索
+            if (orderData.product_no) {
+                this.inputText = orderData.product_no;
+                this.searchProduct();
+            }
+            
+            // 显示成功通知
+            if (window.showNotification) {
+                window.showNotification('收到新的订单数据', 'success', 3000);
+            }
+        },
+        
         handleInput(event) {
             this.inputText = event.target.value;
         },
@@ -210,10 +237,6 @@ export default {
         
         togglePaymentInfo() {
             this.paymentInfoExpanded = !this.paymentInfoExpanded;
-        },
-        
-        toggleWebSocket() {
-            this.websocketExpanded = !this.websocketExpanded;
         },
         
         // 新的图片预览方法

@@ -29,6 +29,66 @@
 }
 
 /* ========================================
+ * 2. 订单信息区域样式
+ * ======================================== */
+
+/**
+ * 订单信息区域
+ * 作用：显示从WebSocket接收到的订单数据
+ * 特点：可折叠，JSON格式展示，支持清空操作
+ */
+.order-info-section {
+    margin: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: #f9f9f9;
+    overflow: hidden;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #e3f2fd;
+    border-bottom: 1px solid #ddd;
+}
+
+.order-header h4 {
+    margin: 0;
+    color: #1976d2;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.order-content {
+    padding: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.order-data-display {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 12px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.order-data-display pre {
+    margin: 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* ========================================
  * 2. 搜索区域样式
  * ======================================== */
 

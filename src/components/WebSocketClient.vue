@@ -87,6 +87,19 @@
                 </div>
             </div>
             
+            <!-- 订单信息区域 -->
+            <div class="order-info-section" v-if="parsedOrderData">
+                <div class="order-header">
+                    <h4>订单信息区域</h4>
+                    <button @click="clearOrderData" class="control-btn clear-btn">清空</button>
+                </div>
+                <div class="order-content">
+                    <div class="order-data-display">
+                        <pre>{{ JSON.stringify(parsedOrderData, null, 2) }}</pre>
+                    </div>
+                </div>
+            </div>
+            
             <!-- 消息日志 -->
             <div class="message-log-section">
                 <div class="log-header">
@@ -130,7 +143,8 @@ export default {
             messageLog: [],
             randomEnabled: false,
             fastEnabled: false,
-            maxLogEntries: 100
+            maxLogEntries: 100,
+            parsedOrderData: null // 新增：解析后的订单数据
         };
     },
     methods: {
@@ -160,6 +174,9 @@ export default {
                 // 接收消息
                 this.ws.onmessage = (event) => {
                     this.addLog(`收到: ${event.data}`, 'received');
+                    
+                    // 新增：验证和解析接收到的消息
+                    this.validateAndParseMessage(event.data);
                 };
                 
                 // 连接关闭
@@ -181,6 +198,41 @@ export default {
                 this.addLog(`连接失败: ${error.message}`, 'error');
                 this.updateStatus('disconnected', '连接失败');
             }
+        },
+        
+        // 新增：验证和解析接收到的消息
+        validateAndParseMessage(message) {
+            try {
+                // 检查消息是否以"order="开头
+                if (typeof message === 'string' && message.startsWith('order=')) {
+                    // 提取"="后面的JSON字符串
+                    const jsonString = message.substring(6); // 去掉"order="前缀
+                    
+                    // 尝试解析JSON
+                    const orderData = JSON.parse(jsonString);
+                    
+                    // 解析成功，更新订单数据
+                    this.parsedOrderData = orderData;
+                    this.addLog(`订单数据解析成功: ${jsonString}`, 'system');
+                    
+                    // 发送事件通知父组件
+                    this.$emit('orderDataReceived', orderData);
+                    
+                } else {
+                    // 不是订单消息，记录为普通消息
+                    console.log('收到普通消息:', message);
+                }
+            } catch (error) {
+                // JSON解析失败
+                this.addLog(`订单数据解析失败: ${error.message}`, 'error');
+                console.error('订单数据解析失败:', error);
+            }
+        },
+        
+        // 新增：清空订单数据
+        clearOrderData() {
+            this.parsedOrderData = null;
+            this.addLog('订单数据已清空', 'system');
         },
         
         // 发送插件ID
