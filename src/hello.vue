@@ -118,14 +118,10 @@
         <!-- 状态栏 -->
         <div class="status-bar">
             <div class="status-item">
-                <span class="status-label">网络状态:</span>
-                <span class="status-value" :class="websocketStatus">
-                    {{ websocketStatusText }}
-                </span>
+                <div class="status-dot" :class="websocketStatus"></div>
             </div>
             <div class="status-item">
-                <span class="status-label">连接时间:</span>
-                <span class="status-value">{{ connectionTime }}</span>
+                <span class="order-info">{{ orderInfoText }}</span>
             </div>
         </div>
     </div>
@@ -166,8 +162,7 @@ export default {
             websocketExpanded: true,
             // 状态栏相关
             websocketStatus: 'disconnected',
-            websocketStatusText: '未连接',
-            connectionTime: '--'
+            orderInfoText: ''
         };
     },
     computed: {
@@ -574,13 +569,6 @@ export default {
         // 新增：监听WebSocket状态变化
         handleWebSocketStatusChange(status) {
             this.websocketStatus = status;
-            if (status === 'connected') {
-                this.websocketStatusText = '已连接';
-                this.connectionTime = new Date().toLocaleTimeString();
-            } else {
-                this.websocketStatusText = '未连接';
-                this.connectionTime = '--';
-            }
         },
 
         // 新增：处理从WebSocket接收到的订单消息
@@ -597,10 +585,8 @@ export default {
                 this.errorMessage = '';
                 this.isLoading = false;
                 
-                // 显示成功通知
-                if (window.showNotification) {
-                    window.showNotification(`收到订单信息: ${orderData.product_no}`, 'success', 3000);
-                }
+                // 在状态栏显示订单信息
+                this.orderInfoText = `收到订单信息: ${orderData.product_no}`;
                 
                 console.log('订单信息已更新到界面:', orderData);
                 console.log('订单详细信息:', {

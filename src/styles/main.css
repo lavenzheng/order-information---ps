@@ -1518,7 +1518,14 @@
     border-radius: 4px;               /* 圆角 */
 } 
 
-/* 状态栏样式 */
+/* ========================================
+ * 17. 状态栏样式
+ * ======================================== */
+
+/**
+ * 状态栏容器
+ * 作用：固定在底部的状态显示栏
+ */
 .status-bar {
     position: fixed;
     bottom: 0;
@@ -1535,41 +1542,67 @@
     z-index: 1000;
 }
 
+/**
+ * 状态项容器
+ * 作用：包含单个状态信息的容器
+ */
 .status-item {
     display: flex;
     align-items: center;
     gap: 8px;
 }
 
-.status-label {
+/**
+ * 状态点指示器
+ * 作用：用不同颜色的小圆点显示连接状态
+ */
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #e74c3c; /* 默认红色（断开连接） */
+    transition: background-color 0.3s ease;
+}
+
+/**
+ * 连接成功状态 - 绿色
+ */
+.status-dot.connected {
+    background-color: #27ae60;
+}
+
+/**
+ * 连接失败状态 - 红色
+ */
+.status-dot.disconnected {
+    background-color: #e74c3c;
+}
+
+/**
+ * 连接中状态 - 黄色
+ */
+.status-dot.connecting {
+    background-color: #f39c12;
+}
+
+/**
+ * 订单信息文字
+ * 作用：显示收到的订单信息
+ */
+.order-info {
+    color: #ecf0f1;
     font-weight: 500;
-    color: #bdc3c7;
+    font-size: 13px;
 }
 
-.status-value {
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-weight: 600;
-    min-width: 60px;
-    text-align: center;
-}
+/* ========================================
+ * 18. 通知系统样式
+ * ======================================== */
 
-.status-value.connected {
-    background: #27ae60;
-    color: white;
-}
-
-.status-value.disconnected {
-    background: #e74c3c;
-    color: white;
-}
-
-.status-value.connecting {
-    background: #f39c12;
-    color: white;
-} 
-
-/* 通知系统样式 */
+/**
+ * 通知容器
+ * 作用：显示系统通知的容器
+ */
 .notification {
     position: fixed;
     top: 20px;
@@ -1585,10 +1618,18 @@
     border-left: 4px solid #3498db;
 }
 
+/**
+ * 通知显示状态
+ * 作用：控制通知的显示动画
+ */
 .notification.show {
     transform: translateX(0);
 }
 
+/**
+ * 通知内容区域
+ * 作用：包含通知消息和关闭按钮
+ */
 .notification-content {
     display: flex;
     align-items: center;
@@ -1596,6 +1637,10 @@
     padding: 12px 16px;
 }
 
+/**
+ * 通知消息文字
+ * 作用：显示通知的具体内容
+ */
 .notification-message {
     flex: 1;
     margin-right: 12px;
@@ -1603,6 +1648,10 @@
     font-size: 14px;
 }
 
+/**
+ * 通知关闭按钮
+ * 作用：关闭通知的按钮
+ */
 .notification-close {
     background: none;
     border: none;
@@ -1619,23 +1668,43 @@
     transition: background-color 0.2s ease;
 }
 
+/**
+ * 通知关闭按钮悬停效果
+ * 作用：鼠标悬停时的背景变化
+ */
 .notification-close:hover {
     background-color: #ecf0f1;
     color: #7f8c8d;
 }
 
+/**
+ * 信息类型通知
+ * 作用：蓝色边框的信息通知
+ */
 .notification-info {
     border-left-color: #3498db;
 }
 
+/**
+ * 成功类型通知
+ * 作用：绿色边框的成功通知
+ */
 .notification-success {
     border-left-color: #27ae60;
 }
 
+/**
+ * 警告类型通知
+ * 作用：黄色边框的警告通知
+ */
 .notification-warning {
     border-left-color: #f39c12;
 }
 
+/**
+ * 错误类型通知
+ * 作用：红色边框的错误通知
+ */
 .notification-error {
     border-left-color: #e74c3c;
 } 
