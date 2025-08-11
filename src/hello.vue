@@ -117,10 +117,12 @@
         
         <!-- 状态栏 -->
         <div class="status-bar">
-            <div class="status-item">
+            <!-- 网络连接状态圆点 - 固定在最左边 -->
+            <div class="status-dot-container">
                 <div class="status-dot" :class="websocketStatus"></div>
             </div>
-            <div class="status-item">
+            <!-- 通知信息区域 - 占据剩余空间 -->
+            <div class="status-info-container">
                 <span class="order-info">{{ orderInfoText || statusNotification }}</span>
             </div>
         </div>
@@ -589,4 +591,32 @@ export default {
 
 <style>
 /* 样式已移至 main.css 文件中统一管理 */
+
+/* 状态栏布局样式 */
+.status-bar {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #e0e0e0;
+    gap: 12px;
+}
+
+.status-dot-container {
+    flex-shrink: 0; /* 防止圆点被压缩 */
+    width: 20px; /* 固定宽度 */
+}
+
+.status-info-container {
+    flex: 1; /* 占据剩余空间 */
+    min-width: 0; /* 允许文本截断 */
+}
+
+.order-info {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 </style>
