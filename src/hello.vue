@@ -121,7 +121,7 @@
                 <div class="status-dot" :class="websocketStatus"></div>
             </div>
             <div class="status-item">
-                <span class="order-info">{{ orderInfoText }}</span>
+                <span class="order-info">{{ orderInfoText || statusNotification }}</span>
             </div>
         </div>
     </div>
@@ -132,7 +132,7 @@ import ProductInfo from './components/ProductInfo.vue';
 import PaymentInfo from './components/PaymentInfo.vue';
 import CustomerInfo from './components/CustomerInfo.vue';
 import WebSocketClient from './components/WebSocketClient.vue';
-import { searchProductByNo } from './api/productApi';
+import { searchProductByNo, preloadProductData, clearProductCache } from './api/productApi';
 import { openExternalUrl } from './utils/uxpUtils';
 import config from './config';
 
@@ -162,7 +162,9 @@ export default {
             websocketExpanded: true,
             // 状态栏相关
             websocketStatus: 'disconnected',
-            orderInfoText: ''
+            orderInfoText: '',
+            // 搜索优化相关
+            isDataPreloaded: false
         };
     },
     computed: {
@@ -173,7 +175,7 @@ export default {
             return this.currentImageList[this.currentImageIndex];
         }
     },
-    mounted() {
+    async mounted() {
         // 添加键盘事件监听
         document.addEventListener('keydown', this.handleKeydown);
         
@@ -182,23 +184,53 @@ export default {
         
         // 添加通知系统
         this.setupNotificationSystem();
-    },
-    beforeDestroy() {
-        // 移除键盘事件监听
-        document.removeEventListener('keydown', this.handleKeydown);
+        
+        // 预加载产品数据以提高首次搜索速度
+        this.preloadData();
     },
     methods: {
-        // 新增：切换WebSocket区域展开状态
+        // 显示状态栏通知
+        showStatusNotification(message, type = 'info', duration = 3000) {
+            this.orderInfoText = message;
+            
+            // 自动清除通知
+            if (duration > 0) {
+                setTimeout(() => {
+                    this.clearStatusNotification();
+                }, duration);
+            }
+        },
+        
+        // 清除状态栏通知
+        clearStatusNotification() {
+            this.orderInfoText = '';
+        },
+        
+        // 预加载产品数据
+        async preloadData() {
+            try {
+                console.log('开始预加载产品数据...');
+                await preloadProductData();
+                this.isDataPreloaded = true;
+                console.log('产品数据预加载完成');
+                
+                this.showStatusNotification('产品数据已预加载', 'success', 3000);
+            } catch (error) {
+                console.warn('产品数据预加载失败:', error);
+                this.isDataPreloaded = false;
+                
+                this.showStatusNotification('产品数据预加载失败', 'error', 3000);
+            }
+        },
+        
+        // 切换WebSocket区域展开状态
         toggleWebSocket() {
             this.websocketExpanded = !this.websocketExpanded;
         },
         
-        // 新增：处理从WebSocket接收到的订单数据
+        // 处理从WebSocket接收到的订单数据
         handleOrderDataReceived(orderData) {
             console.log('收到订单数据:', orderData);
-            
-            // 这里可以根据需要处理订单数据
-            // 例如：自动填充搜索框、显示通知等
             
             // 如果订单数据包含产品编号，可以自动搜索
             if (orderData.product_no) {
@@ -207,11 +239,10 @@ export default {
             }
             
             // 显示成功通知
-            if (window.showNotification) {
-                window.showNotification('收到新的订单数据', 'success', 3000);
-            }
+            this.showStatusNotification('收到新的订单数据', 'success', 3000);
         },
         
+        // 处理输入变化
         handleInput(event) {
             this.inputText = event.target.value;
         },
@@ -222,6 +253,7 @@ export default {
             this.errorMessage = '';
         },
         
+        // 搜索产品（优化版本）
         async searchProduct() {
             if (!this.inputText.trim()) {
                 this.errorMessage = '请输入产品编号';
@@ -233,7 +265,9 @@ export default {
             this.searchResult = null;
             
             try {
-                const result = await searchProductByNo(this.inputText.trim());
+                console.log(`开始搜索产品编号: ${this.inputText.trim()}`);
+                
+                const result = await searchProductByNo(this.inputText.trim(), true);
                 this.searchResult = result;
                 
                 if (this.searchResult.length === 0) {
@@ -259,7 +293,7 @@ export default {
             this.paymentInfoExpanded = !this.paymentInfoExpanded;
         },
         
-        // 新的图片预览方法
+        // 图片预览方法
         openImageWithIndex(imageData) {
             if (!imageData) return;
             
@@ -267,7 +301,7 @@ export default {
             let imageUrl, imageList, imageIndex;
             
             if (typeof imageData === 'string') {
-                // 兼容原来的字符串格式 - 使用原来的单张图片打开方式
+                // 兼容原来的字符串格式
                 this.openImage(imageData);
                 return;
             } else if (imageData.url) {
@@ -303,7 +337,7 @@ export default {
             if (!imageUrl) return;
             
             try {
-                // 显示图片信息（尺寸、URL等）
+                // 显示图片信息
                 this.showImageInfo(imageUrl);
                 
                 // 使用新的图片面板功能
@@ -349,9 +383,7 @@ export default {
         prevImage() {
             if (this.currentImageIndex > 0) {
                 this.currentImageIndex--;
-                // 显示当前图片信息
                 this.showImageInfo(this.currentImageUrl);
-                // 获取当前图片尺寸
                 this.getCurrentImageSize();
             }
         },
@@ -360,9 +392,7 @@ export default {
         nextImage() {
             if (this.currentImageIndex < this.currentImageList.length - 1) {
                 this.currentImageIndex++;
-                // 显示当前图片信息
                 this.showImageInfo(this.currentImageUrl);
-                // 获取当前图片尺寸
                 this.getCurrentImageSize();
             }
         },
@@ -381,17 +411,11 @@ export default {
                 return;
             }
             
-            console.log('开始获取图片尺寸:', this.currentImageUrl);
-            
-            // 参考之前单张图片的尺寸获取逻辑
             const img = new Image();
             img.onload = () => {
-                console.log('图片尺寸获取成功:', img.width, '×', img.height);
                 this.currentImageSize = `${img.width} × ${img.height}`;
-                console.log('设置currentImageSize:', this.currentImageSize);
             };
             img.onerror = () => {
-                console.warn('图片尺寸获取失败:', this.currentImageUrl);
                 this.currentImageSize = '尺寸获取失败';
             };
             img.src = this.currentImageUrl;
@@ -400,13 +424,11 @@ export default {
         // 处理预览图片加载错误
         handlePreviewImageError(event) {
             console.warn('预览图片加载失败:', event.target.src);
-            // 可以在这里显示一个占位图片
         },
 
         // 处理预览图片加载成功
         handlePreviewImageLoad(event) {
             console.log('预览图片加载成功:', event.target.src);
-            // 图片加载成功后，获取尺寸
             this.getCurrentImageSize();
         },
 
@@ -425,7 +447,6 @@ export default {
         setupWebSocketConsole() {
             if (window.WebSocket) {
                 console.log('WebSocket 客户端已准备就绪。');
-                console.log('您可以在控制台中发送消息与WebSocket服务器交互。');
                 
                 // 创建全局WebSocket控制台对象
                 window.wsConsole = {
@@ -450,12 +471,28 @@ export default {
                         }
                     },
                     
+                    // 缓存管理
+                    clearCache: () => {
+                        clearProductCache();
+                        this.isDataPreloaded = false;
+                        console.log('产品数据缓存已清空');
+                        this.showStatusNotification('缓存已清空，下次搜索将重新获取数据', 'info', 3000);
+                    },
+                    
+                    // 预加载数据
+                    preloadData: () => {
+                        this.preloadData();
+                    },
+                    
                     // 帮助信息
                     help: () => {
                         console.log('WebSocket控制台命令:');
                         console.log('  wsConsole.send("消息") - 发送自定义消息');
                         console.log('  wsConsole.status() - 查看连接状态');
+                        console.log('  wsConsole.clearCache() - 清空产品数据缓存');
+                        console.log('  wsConsole.preloadData() - 预加载产品数据');
                         console.log('  wsConsole.help() - 显示此帮助信息');
+                        console.log('  注意：所有通知信息将显示在状态栏中');
                     }
                 };
                 
@@ -466,7 +503,7 @@ export default {
             }
         },
         
-        // 新增：设置通知系统
+        // 设置通知系统
         setupNotificationSystem() {
             // 创建全局通知函数
             window.showNotification = (message, type = 'info', duration = 3000) => {
@@ -515,12 +552,12 @@ export default {
             }, 300);
         },
 
-        // 新增：监听WebSocket状态变化
+        // 监听WebSocket状态变化
         handleWebSocketStatusChange(status) {
             this.websocketStatus = status;
         },
 
-        // 新增：处理从WebSocket接收到的订单消息
+        // 处理从WebSocket接收到的订单消息
         handleOrderMessageReceived(orderData) {
             console.log('收到订单数据:', orderData);
             
@@ -537,24 +574,13 @@ export default {
                 // 在状态栏显示订单信息
                 this.orderInfoText = `收到订单信息: ${orderData.product_no}`;
                 
+                // 显示成功通知
+                this.showStatusNotification('收到新的订单数据', 'success', 3000);
+                
                 console.log('订单信息已更新到界面:', orderData);
-                console.log('订单详细信息:', {
-                    '产品编号': orderData.product_no,
-                    '产品名称': orderData.product_name,
-                    '产品状态': orderData.product_status_name,
-                    '产品类型': orderData.product_type_name,
-                    '总价格': orderData.total_price,
-                    '已付金额': orderData.total_pay,
-                    '客户编号': orderData.customer && orderData.customer.customer_no,
-                    '设计师': orderData.editor_name,
-                    '创建时间': orderData.create_time,
-                    '附件数量': orderData.attachments && orderData.attachments.length || 0
-                });
             } else {
                 console.warn('收到的订单数据格式不正确:', orderData);
-                if (window.showNotification) {
-                    window.showNotification('收到的订单数据格式不正确', 'error', 3000);
-                }
+                this.showStatusNotification('收到的订单数据格式不正确', 'error', 3000);
             }
         }
     }

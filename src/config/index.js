@@ -1,6 +1,7 @@
 /**
  * 应用配置文件
  * 集中管理所有配置项
+ * 优化版本：添加性能相关配置
  */
 
 export const config = {
@@ -21,6 +22,13 @@ export const config = {
             timeout: 10000, // 10秒超时
             retryCount: 3,  // 重试次数
             retryDelay: 1000 // 重试延迟
+        },
+        // 缓存配置
+        cache: {
+            enabled: true,
+            expiryTime: 5 * 60 * 1000, // 5分钟缓存过期
+            maxSize: 100, // 最大缓存条目数
+            preloadOnStartup: true // 启动时预加载
         }
     },
     
@@ -61,17 +69,12 @@ export const config = {
         
         // 搜索配置
         search: {
-            // 是否区分大小写
-            caseSensitive: false,
-            
-            // 是否启用模糊搜索
-            fuzzySearch: false,
-            
-            // 最小搜索字符数
-            minSearchLength: 1,
-            
-            // 搜索延迟（毫秒）
-            debounceDelay: 300
+            // 搜索功能配置
+            enableRealTimeSearch: false,  // 禁用实时搜索
+            debounceDelay: 0,            // 禁用防抖延迟
+            minSearchLength: 1,          // 最小搜索字符数
+            caseSensitive: false,        // 是否区分大小写
+            fuzzySearch: false           // 禁用模糊搜索
         },
         
         // 错误处理配置
@@ -81,6 +84,27 @@ export const config = {
             
             // 错误消息显示时间（毫秒）
             errorDisplayTime: 5000
+        },
+        
+        // 性能优化配置
+        performance: {
+            // 是否启用懒加载
+            enableLazyLoading: true,
+            
+            // 是否启用虚拟滚动（大量数据时）
+            enableVirtualScrolling: false,
+            
+            // 图片加载优化
+            imageOptimization: {
+                // 是否启用图片预加载
+                enablePreload: true,
+                
+                // 图片加载超时时间
+                loadTimeout: 10000,
+                
+                // 是否启用图片压缩
+                enableCompression: false
+            }
         }
     },
     
@@ -99,6 +123,11 @@ export const config = {
                 networkError: '网络连接失败，请重试',
                 apiError: 'API请求失败，请重试',
                 unknownError: '未知错误，请重试'
+            },
+            performanceMessages: {
+                cacheHit: '缓存命中，搜索速度提升',
+                preloadComplete: '数据预加载完成',
+                searchComplete: '搜索完成'
             }
         }
     }
