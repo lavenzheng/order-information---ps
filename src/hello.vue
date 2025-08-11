@@ -1,11 +1,12 @@
 <template>
     <div class="plugin-container">
-        <!-- WebSocket连接区域 -->
+        <!-- WebSocket 客户端 -->
         <WebSocketClient 
+            ref="websocketClient"
             :expanded="websocketExpanded"
-            @toggle="toggleWebsocket"
-            @orderDataReceived="handleOrderDataReceived"
-        />
+            @toggle="toggleWebSocket"
+            @statusChanged="handleWebSocketStatusChange"
+            @orderMessageReceived="handleOrderMessageReceived" />
         
         <!-- 搜索区域 -->
         <div class="search-area">
@@ -113,6 +114,20 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="status-label">网络状态:</span>
+                <span class="status-value" :class="websocketStatus">
+                    {{ websocketStatusText }}
+                </span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">连接时间:</span>
+                <span class="status-value">{{ connectionTime }}</span>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -148,7 +163,11 @@ export default {
             currentImageIndex: 0,
             currentImageSize: null,
             // WebSocket相关
-            websocketExpanded: true
+            websocketExpanded: true,
+            // 状态栏相关
+            websocketStatus: 'disconnected',
+            websocketStatusText: '未连接',
+            connectionTime: '--'
         };
     },
     computed: {
@@ -162,6 +181,12 @@ export default {
     mounted() {
         // 添加键盘事件监听
         document.addEventListener('keydown', this.handleKeydown);
+        
+        // 添加WebSocket控制台功能
+        this.setupWebSocketConsole();
+        
+        // 添加通知系统
+        this.setupNotificationSystem();
     },
     beforeDestroy() {
         // 移除键盘事件监听
@@ -169,7 +194,7 @@ export default {
     },
     methods: {
         // 新增：切换WebSocket区域展开状态
-        toggleWebsocket() {
+        toggleWebSocket() {
             this.websocketExpanded = !this.websocketExpanded;
         },
         
@@ -397,6 +422,203 @@ export default {
                     this.prevImage();
                 } else if (event.key === 'ArrowRight') {
                     this.nextImage();
+                }
+            }
+        },
+
+        // 新增：设置WebSocket控制台功能
+        setupWebSocketConsole() {
+            if (window.WebSocket) {
+                console.log('WebSocket 客户端已准备就绪。');
+                console.log('您可以在控制台中发送消息与WebSocket服务器交互。');
+                console.log('例如：发送 "ping" 测试连接，发送 "message: 您的消息" 发送消息。');
+                
+                // 创建全局WebSocket控制台对象
+                window.wsConsole = {
+                    // 发送消息
+                    send: (message) => {
+                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
+                            this.$refs.websocketClient.sendMessage(message);
+                        } else {
+                            console.warn('WebSocket未连接，无法发送消息');
+                        }
+                    },
+                    
+                    // 发送Echo消息
+                    echo: (message = 'Hello World') => {
+                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
+                            this.$refs.websocketClient.sendEcho(message);
+                        } else {
+                            console.warn('WebSocket未连接，无法发送Echo消息');
+                        }
+                    },
+                    
+                    // 开启随机数
+                    randomOn: () => {
+                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
+                            this.$refs.websocketClient.toggleRandom();
+                        } else {
+                            console.warn('WebSocket未连接，无法开启随机数');
+                        }
+                    },
+                    
+                    // 关闭随机数
+                    randomOff: () => {
+                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
+                            this.$refs.websocketClient.toggleRandom();
+                        } else {
+                            console.warn('WebSocket未连接，无法关闭随机数');
+                        }
+                    },
+                    
+                    // 开启快速计数
+                    fastOn: () => {
+                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
+                            this.$refs.websocketClient.toggleFast();
+                        } else {
+                            console.warn('WebSocket未连接，无法开启快速计数');
+                        }
+                    },
+                    
+                    // 关闭快速计数
+                    fastOff: () => {
+                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
+                            this.$refs.websocketClient.toggleFast();
+                        } else {
+                            console.warn('WebSocket未连接，无法关闭快速计数');
+                        }
+                    },
+                    
+                    // 获取连接状态
+                    status: () => {
+                        if (this.$refs.websocketClient) {
+                            const status = this.$refs.websocketClient.isConnected ? '已连接' : '未连接';
+                            console.log(`WebSocket状态: ${status}`);
+                            return status;
+                        } else {
+                            console.warn('WebSocket客户端未找到');
+                            return '未找到';
+                        }
+                    },
+                    
+                    // 帮助信息
+                    help: () => {
+                        console.log('WebSocket控制台命令:');
+                        console.log('  wsConsole.send("消息") - 发送自定义消息');
+                        console.log('  wsConsole.echo("消息") - 发送Echo消息');
+                        console.log('  wsConsole.randomOn() - 开启随机数生成');
+                        console.log('  wsConsole.randomOff() - 关闭随机数生成');
+                        console.log('  wsConsole.fastOn() - 开启快速计数');
+                        console.log('  wsConsole.fastOff() - 关闭快速计数');
+                        console.log('  wsConsole.status() - 查看连接状态');
+                        console.log('  wsConsole.help() - 显示此帮助信息');
+                    }
+                };
+                
+                console.log('使用 wsConsole.help() 查看所有可用命令');
+                
+            } else {
+                console.warn('您的浏览器不支持 WebSocket。');
+            }
+        },
+        
+        // 新增：设置通知系统
+        setupNotificationSystem() {
+            // 创建全局通知函数
+            window.showNotification = (message, type = 'info', duration = 3000) => {
+                // 创建通知元素
+                const notification = document.createElement('div');
+                notification.className = `notification notification-${type}`;
+                notification.innerHTML = `
+                    <div class="notification-content">
+                        <span class="notification-message">${message}</span>
+                        <button class="notification-close">&times;</button>
+                    </div>
+                `;
+                
+                // 添加到页面
+                document.body.appendChild(notification);
+                
+                // 显示动画
+                setTimeout(() => {
+                    notification.classList.add('show');
+                }, 100);
+                
+                // 关闭按钮事件
+                const closeBtn = notification.querySelector('.notification-close');
+                closeBtn.addEventListener('click', () => {
+                    this.hideNotification(notification);
+                });
+                
+                // 自动隐藏
+                if (duration > 0) {
+                    setTimeout(() => {
+                        this.hideNotification(notification);
+                    }, duration);
+                }
+            };
+            
+            console.log('通知系统已准备就绪');
+        },
+        
+        // 隐藏通知
+        hideNotification(notification) {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        },
+
+        // 新增：监听WebSocket状态变化
+        handleWebSocketStatusChange(status) {
+            this.websocketStatus = status;
+            if (status === 'connected') {
+                this.websocketStatusText = '已连接';
+                this.connectionTime = new Date().toLocaleTimeString();
+            } else {
+                this.websocketStatusText = '未连接';
+                this.connectionTime = '--';
+            }
+        },
+
+        // 新增：处理从WebSocket接收到的订单消息
+        handleOrderMessageReceived(orderData) {
+            console.log('收到订单数据:', orderData);
+            
+            // 直接使用已经解析好的订单数据
+            if (orderData && orderData.product_no) {
+                // 自动填充搜索框
+                this.inputText = orderData.product_no;
+                
+                // 直接设置搜索结果，无需重新搜索
+                this.searchResult = [orderData];
+                this.errorMessage = '';
+                this.isLoading = false;
+                
+                // 显示成功通知
+                if (window.showNotification) {
+                    window.showNotification(`收到订单信息: ${orderData.product_no}`, 'success', 3000);
+                }
+                
+                console.log('订单信息已更新到界面:', orderData);
+                console.log('订单详细信息:', {
+                    '产品编号': orderData.product_no,
+                    '产品名称': orderData.product_name,
+                    '产品状态': orderData.product_status_name,
+                    '产品类型': orderData.product_type_name,
+                    '总价格': orderData.total_price,
+                    '已付金额': orderData.total_pay,
+                    '客户编号': orderData.customer && orderData.customer.customer_no,
+                    '设计师': orderData.editor_name,
+                    '创建时间': orderData.create_time,
+                    '附件数量': orderData.attachments && orderData.attachments.length || 0
+                });
+            } else {
+                console.warn('收到的订单数据格式不正确:', orderData);
+                if (window.showNotification) {
+                    window.showNotification('收到的订单数据格式不正确', 'error', 3000);
                 }
             }
         }

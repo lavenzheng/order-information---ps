@@ -71,6 +71,48 @@ node index.js
 - `fast=on/off` - 开启/关闭快速计数
 - `validate=消息列表` - 验证消息完整性
 
+## 订单信息处理
+
+### 订单消息格式
+服务器发送的订单消息格式为：
+```
+order={JSON数据}
+```
+
+其中JSON数据包含完整的订单信息，例如：
+```json
+{
+  "product_id": 17154,
+  "product_no": "CD25JUN8345",
+  "product_status": 2,
+  "product_status_name": "首稿设计",
+  "product_name": "CD25JUN8345",
+  "product_type": 1,
+  "product_type_name": "定制品",
+  "total_price": 740.0,
+  "total_pay": 100.0,
+  "customize_info": "定制内容...",
+  "editor_name": "Haven",
+  "create_time": "2025-06-28T12:00:00",
+  "customer": {...},
+  "attachments": [...]
+}
+```
+
+### 自动处理流程
+1. WebSocket客户端接收到`order=`开头的消息
+2. 自动解析JSON数据
+3. 将订单信息发送到主界面
+4. 自动填充搜索框并显示订单信息
+5. 在订单信息区域展示所有相关数据
+
+### 测试订单信息
+可以通过以下方式测试订单信息处理：
+1. 确保WebSocket连接已建立
+2. 服务器发送格式为`order={...}`的消息
+3. 观察界面是否自动更新订单信息
+4. 检查控制台日志确认数据解析成功
+
 ## 注意事项
 
 1. **连接状态**: 确保服务器正在运行且端口8080可用
