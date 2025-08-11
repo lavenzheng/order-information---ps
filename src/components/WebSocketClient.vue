@@ -26,11 +26,6 @@ export default {
             statusText: '未连接',
             serverUrl: 'ws://localhost:8080',
             protocol: 'test-protocol',
-            messageInput: '',
-            messageLog: [],
-            randomEnabled: false,
-            fastEnabled: false,
-            maxLogEntries: 100,
             autoReconnect: true,
             reconnectInterval: 5000, // 5秒重连间隔
             reconnectTimer: null
@@ -97,8 +92,6 @@ export default {
                 // 连接关闭
                 this.ws.onclose = (event) => {
                     this.isConnected = false;
-                    this.randomEnabled = false;
-                    this.fastEnabled = false;
                     this.updateStatus('disconnected', '连接已断开');
                     this.logToConsole(`WebSocket: 连接已断开 (代码: ${event.code})`, 'system');
                     
@@ -145,8 +138,6 @@ export default {
                 this.ws.close();
                 this.ws = null;
                 this.isConnected = false;
-                this.randomEnabled = false;
-                this.fastEnabled = false;
                 
                 // 清除重连定时器
                 if (this.reconnectTimer) {
@@ -173,36 +164,6 @@ export default {
             }
         },
         
-        // 发送Echo消息
-        sendEcho(message = 'Hello World') {
-            if (!this.isConnected) return;
-            
-            const echoMessage = `echo=${message}`;
-            this.sendMessage(echoMessage);
-        },
-        
-        // 切换随机数生成
-        toggleRandom() {
-            if (!this.isConnected) return;
-            
-            this.randomEnabled = !this.randomEnabled;
-            const message = `rand=${this.randomEnabled ? 'on' : 'off'}`;
-            
-            this.sendMessage(message);
-            this.logToConsole(`WebSocket: 随机数 ${this.randomEnabled ? '开启' : '关闭'}`, 'system');
-        },
-        
-        // 切换快速计数
-        toggleFast() {
-            if (!this.isConnected) return;
-            
-            this.fastEnabled = !this.fastEnabled;
-            const message = `fast=${this.fastEnabled ? 'on' : 'off'}`;
-            
-            this.sendMessage(message);
-            this.logToConsole(`WebSocket: 快速计数 ${this.fastEnabled ? '开启' : '关闭'}`, 'system');
-        },
-        
         // 更新连接状态
         updateStatus(status, text) {
             this.connectionStatus = status;
@@ -210,26 +171,6 @@ export default {
             
             // 通知父组件状态变化
             this.$emit('statusChanged', status);
-        },
-        
-        // 添加日志条目（保留原有功能，但主要使用控制台输出）
-        addLog(content, type = 'system') {
-            const timestamp = new Date().toLocaleTimeString();
-            this.messageLog.push({
-                time: timestamp,
-                content: content,
-                type: type
-            });
-            
-            // 限制日志条目数量
-            if (this.messageLog.length > this.maxLogEntries) {
-                this.messageLog.shift();
-            }
-        },
-        
-        // 清空日志
-        clearLog() {
-            this.messageLog = [];
         },
         
         // 输出到控制台
@@ -253,9 +194,6 @@ export default {
                 default:
                     console.log(`${prefix} ℹ️ ${content}`);
             }
-            
-            // 同时添加到内部日志（用于调试）
-            this.addLog(content, type);
         },
         
         // 发送插件ID
@@ -289,7 +227,6 @@ export default {
                 } catch (e) {
                     this.logToConsole(`WebSocket: 解析订单消息失败: ${e.message}`, 'error');
                     this.logToConsole(`WebSocket: 原始消息: ${message}`, 'error');
-                    this.logToConsole(`WebSocket: 尝试解析的JSON字符串: ${jsonString}`, 'error');
                 }
             }
         }

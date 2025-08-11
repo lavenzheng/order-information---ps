@@ -421,12 +421,11 @@ export default {
             }
         },
 
-        // 新增：设置WebSocket控制台功能
+        // 设置WebSocket控制台功能
         setupWebSocketConsole() {
             if (window.WebSocket) {
                 console.log('WebSocket 客户端已准备就绪。');
                 console.log('您可以在控制台中发送消息与WebSocket服务器交互。');
-                console.log('例如：发送 "ping" 测试连接，发送 "message: 您的消息" 发送消息。');
                 
                 // 创建全局WebSocket控制台对象
                 window.wsConsole = {
@@ -436,51 +435,6 @@ export default {
                             this.$refs.websocketClient.sendMessage(message);
                         } else {
                             console.warn('WebSocket未连接，无法发送消息');
-                        }
-                    },
-                    
-                    // 发送Echo消息
-                    echo: (message = 'Hello World') => {
-                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
-                            this.$refs.websocketClient.sendEcho(message);
-                        } else {
-                            console.warn('WebSocket未连接，无法发送Echo消息');
-                        }
-                    },
-                    
-                    // 开启随机数
-                    randomOn: () => {
-                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
-                            this.$refs.websocketClient.toggleRandom();
-                        } else {
-                            console.warn('WebSocket未连接，无法开启随机数');
-                        }
-                    },
-                    
-                    // 关闭随机数
-                    randomOff: () => {
-                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
-                            this.$refs.websocketClient.toggleRandom();
-                        } else {
-                            console.warn('WebSocket未连接，无法关闭随机数');
-                        }
-                    },
-                    
-                    // 开启快速计数
-                    fastOn: () => {
-                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
-                            this.$refs.websocketClient.toggleFast();
-                        } else {
-                            console.warn('WebSocket未连接，无法开启快速计数');
-                        }
-                    },
-                    
-                    // 关闭快速计数
-                    fastOff: () => {
-                        if (this.$refs.websocketClient && this.$refs.websocketClient.isConnected) {
-                            this.$refs.websocketClient.toggleFast();
-                        } else {
-                            console.warn('WebSocket未连接，无法关闭快速计数');
                         }
                     },
                     
@@ -500,11 +454,6 @@ export default {
                     help: () => {
                         console.log('WebSocket控制台命令:');
                         console.log('  wsConsole.send("消息") - 发送自定义消息');
-                        console.log('  wsConsole.echo("消息") - 发送Echo消息');
-                        console.log('  wsConsole.randomOn() - 开启随机数生成');
-                        console.log('  wsConsole.randomOff() - 关闭随机数生成');
-                        console.log('  wsConsole.fastOn() - 开启快速计数');
-                        console.log('  wsConsole.fastOff() - 关闭快速计数');
                         console.log('  wsConsole.status() - 查看连接状态');
                         console.log('  wsConsole.help() - 显示此帮助信息');
                     }
